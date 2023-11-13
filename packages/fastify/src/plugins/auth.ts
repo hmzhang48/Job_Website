@@ -26,7 +26,6 @@ declare module "fastify" {
     authJWT: ( request: FastifyRequest ) => Promise<boolean>
   }
 }
-
 const authPlugin: FastifyPluginAsync = fp( async ( f ) => {
   /*
     f.decorate( "authSession", async ( request: FastifyRequest ) => {
@@ -52,5 +51,4 @@ const authPlugin: FastifyPluginAsync = fp( async ( f ) => {
     return result
   } )
 } )
-
 export default authPlugin

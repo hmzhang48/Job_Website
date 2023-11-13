@@ -1,24 +1,20 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-import knex from "knex"
-import type { Knex } from "knex"
-
+import { drizzle } from 'drizzle-orm/postgres-js'
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import * as schema from '../lib/schema'
 declare module "fastify" {
   interface FastifyInstance {
-    knex: Knex
+    drizzle: PostgresJsDatabase<typeof schema>
   }
 }
-
-const knexPlugin: FastifyPluginAsync = fp( async ( f ) => {
-  const config: Knex.Config = {
-    client: "pg",
-    connection: "postgresql://postgre:postgre@localhost:5432/postgre",
-  }
-  const knexInstance = knex( config )
-  f.decorate( "knex", knexInstance )
-  f.addHook( "onClose", ( f ) => {
-    f.knex.destroy()
+const drizzlePlugin: FastifyPluginAsync = fp( async ( f ) => {
+  const client = postgres( "postgres://postgre:postgre@localhost:5432/postgre" )
+  const database = drizzle( client, { schema } )
+  f.decorate( "drizzle", database )
+  f.addHook( "onClose", () => {
+    client.end()
   } )
 } )
-
-export default knexPlugin
+export default drizzlePlugin

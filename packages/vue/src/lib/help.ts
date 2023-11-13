@@ -11,7 +11,6 @@ export interface city extends province {
 export interface area extends city {
   cityCode: string
 }
-
 export const initProvince = ( province?: HTMLSelectElement ) => {
   if ( province ) {
     provinces.forEach( ( value ) => {
@@ -72,7 +71,6 @@ export const trueType = ( type: string ) => {
     return "兼职"
   }
 }
-
 export const loadImage = async ( source: string | Blob ) => {
   const image = new Image( 128, 128 )
   if ( typeof source === "string" ) {
@@ -155,7 +153,6 @@ const preview =
     context.clearRect( 0, 0, 128, 128 )
     context.drawImage( image, position.x, position.y, 128 * scale, 128 * scale )
   }
-
 export const useObserver = ( element: Ref<HTMLElement | undefined>, f: () => Promise<void>, end: Ref<boolean> ) => {
   const observer = new IntersectionObserver(
     async ( entries ) => {
@@ -180,6 +177,6 @@ export const useObserver = ( element: Ref<HTMLElement | undefined>, f: () => Pro
 export const domain = "http://localhost:5173"
 export const infoKey = Symbol() as InjectionKey<Ref<Record<string, string>>>
 export const corpKey = Symbol() as InjectionKey<Ref<Record<string, string>>>
-export const hrsKey = Symbol() as InjectionKey<Ref<{ name: string; hrid: string }[]>>
+export const hrListKey = Symbol() as InjectionKey<Ref<{ name: string; hrID: string }[]>>
 export const updateKey = Symbol() as InjectionKey<( key: string, value: string ) => void>
 export const resetKey = Symbol() as InjectionKey<() => void>

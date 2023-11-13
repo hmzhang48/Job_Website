@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-
 const eventPlugin: FastifyPluginAsync = fp( async ( f ) => {
   f.get(
     '/event',
@@ -20,5 +19,4 @@ const eventPlugin: FastifyPluginAsync = fp( async ( f ) => {
     }
   )
 } )
-
 export default eventPlugin

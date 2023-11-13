@@ -1,84 +1,72 @@
-<!-- @format -->
-
 <script setup lang="ts">
-  import { ref, inject, onMounted, computed } from "vue"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { useValidStore } from "../stores/validStore.js"
-  import { uploadCV } from "../lib/connect.js"
-  import { domain, infoKey, updateKey } from "../lib/help.js"
-  const modalStore = useModalStore()
-  const validStore = useValidStore()
-  let info = inject(infoKey)
-  let update = inject(updateKey, () => {})
-  let src = computed(() => {
-    if (info?.value.cv) {
-      return `${domain}/fastify/PDF/${info.value.cv}.pdf`
-    } else {
-      return ""
-    }
-  })
-  let embed = ref<HTMLEmbedElement>()
-  onMounted(() => {
-    if (info?.value.cv && embed.value) {
-      embed.value.src = src.value
-      preview.value = true
-    }
-  })
-  let fileInput = ref<HTMLInputElement>()
-  let newCV = ref<File>()
-  let wrong = ref(false)
-  let preview = ref(false)
-  const checkFile = () => {
-    let file = fileInput.value?.files?.[0]
-    if (embed.value && file && file.size <= 5242880) {
-      wrong.value = false
-      newCV.value = file
-      embed.value.src = URL.createObjectURL(file)
-      preview.value = true
-    } else {
-      newCV.value = undefined
-      wrong.value = true
-      preview.value = false
-    }
+import { ref, inject, onMounted, computed } from "vue"
+import { useModalStore } from "../stores/modalStore.js"
+import { useValidStore } from "../stores/validStore.js"
+import { uploadCV } from "../lib/connect.js"
+import { domain, infoKey, updateKey } from "../lib/help.js"
+const modalStore = useModalStore()
+const validStore = useValidStore()
+let info = inject( infoKey )
+let update = inject( updateKey, () => { } )
+let src = computed( () => {
+  if ( info?.value.cv ) {
+    return `${ domain }/fastify/PDF/${ info.value.cv }.pdf`
+  } else {
+    return ""
   }
-  const upload = async () => {
-    if (newCV.value) {
-      const fileName = await uploadCV(newCV.value)
-      if (fileName) {
-        modalStore.showModel("简历上传成功")
-        validStore.cvState = true
-        update("cv", fileName)
-      } else {
-        modalStore.showModel("请重试")
-      }
-    } else {
-      wrong.value = true
-    }
+} )
+let embed = ref<HTMLEmbedElement>()
+onMounted( () => {
+  if ( info?.value.cv && embed.value ) {
+    embed.value.src = src.value
+    preview.value = true
   }
+} )
+let fileInput = ref<HTMLInputElement>()
+let newCV = ref<File>()
+let wrong = ref( false )
+let preview = ref( false )
+const checkFile = () => {
+  let file = fileInput.value?.files?.[ 0 ]
+  if ( embed.value && file && file.size <= 5242880 ) {
+    wrong.value = false
+    newCV.value = file
+    embed.value.src = URL.createObjectURL( file )
+    preview.value = true
+  } else {
+    newCV.value = undefined
+    wrong.value = true
+    preview.value = false
+  }
+}
+const upload = async () => {
+  if ( newCV.value ) {
+    const fileName = await uploadCV( newCV.value )
+    if ( fileName ) {
+      modalStore.showModel( "简历上传成功" )
+      validStore.cvState = true
+      update( "cv", fileName )
+    } else {
+      modalStore.showModel( "请重试" )
+    }
+  } else {
+    wrong.value = true
+  }
+}
 </script>
 
 <template>
   <article>
     <div class="grid">
       <label for="file">
-        <input
-          type="file"
-          accept="application/pdf"
-          id="file"
-          name="file"
-          ref="fileInput"
-          @change="checkFile" />
+        <input type="file" accept="application/pdf" id="file" name="file" ref="fileInput" @change=" checkFile " />
       </label>
-      <button type="submit" @click.prevent="upload">上传</button>
+      <button type="submit" @click.prevent=" upload ">上传</button>
     </div>
-    <p v-show="wrong"><small>"简历PDF需小于5MB"</small></p>
-    <embed
-      v-show="preview"
-      type="application/pdf"
-      width="100%"
-      height="600px"
-      ref="embed" />
+    <p v-show=" wrong "><small>"简历PDF需小于5MB"</small></p>
+    <embed v-show=" preview " type="application/pdf" width="100%" height="600px" ref="embed" />
   </article>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>

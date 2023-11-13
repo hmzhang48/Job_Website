@@ -1,10 +1,8 @@
-<!-- @format -->
-
 <script setup lang="ts">
-  import { ref, inject } from "vue"
-  import { hrsKey } from "../lib/help"
-  let hrs = inject(hrsKey)
-  let verify = ref(false)
+import { ref, inject } from "vue"
+import { hrListKey } from "../lib/help"
+let hrs = inject( hrListKey )
+let verify = ref( false )
 </script>
 
 <template>
@@ -19,15 +17,16 @@
       </nav>
     </article>
   </aside>
-  <article v-if="!verify">
+  <article v-if=" !verify ">
     <h1>企业HR列表</h1>
-    <div v-if="hrs?.length">
-      <ul v-for="hr of hrs" :key="hr.hrid">
-        <li>姓名：{{ hr.name }} 工号：{{ hr.hrid }}</li>
+    <div v-if=" hrs?.length ">
+      <ul v-for=" hr  of  hrs " :key=" hr.hrID ">
+        <li>姓名：{{ hr.name }} 工号：{{ hr.hrID }}</li>
       </ul>
     </div>
     <p v-else>暂无其他HR</p>
   </article>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>

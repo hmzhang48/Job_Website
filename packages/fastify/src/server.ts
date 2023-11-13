@@ -11,13 +11,11 @@ import cookie from "@fastify/cookie"
 import staticfile from "@fastify/static"
 import multipart from "@fastify/multipart"
 import websocket from "@fastify/websocket"
-//import redis from "@fastify/redis"
 //import mongo from "@fastify/mongodb"
 //import pg from "@fastify/postgres"
 //import fs from "fs/promises"
 import path from "path"
 import url from 'url'
-
 const server = fastify( {
   ajv: {
     customOptions: {
@@ -38,11 +36,8 @@ const server = fastify( {
     },
   },
 } )
-
 server.register( sensible )
-
 server.register( helmet )
-
 server.register( autoLoad, {
   dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), 'plugins' ),
   forceESM: true
@@ -53,7 +48,6 @@ server.register( cors, {
   methods: [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ],
   credentials: true
 } )
-
 server.register( session, {
   key: await fs.readFile( path.resolve( "./secret-key" ) ),
   cookie: {
@@ -63,7 +57,6 @@ server.register( session, {
     maxAge: 60 * 60 * 24
   }
 } )
-
 server.register( csrf, {
   sessionPlugin: '@fastify/secure-session'
 } )
@@ -75,31 +68,23 @@ server.register( jwt, {
     signed: true
   }
 } )
-
 server.register( cookie, {
   secret: "secret",
 } )
-
 server.register( staticfile, {
   root: path.resolve( "./public" ),
 } )
-
 server.register( multipart, {
   limits: {
     fileSize: 1048576,
   }
 } )
-
 server.register( websocket, {
   options: {
     maxPayload: 1048576
   }
 } )
 /*
-server.register( redis, {
-  url: 'redis://redis:redis@localhost:6380/redis'
-} )
-
 server.register( mongo, {
   forceClose: true,
   url: 'mongodb://mongodb:mongodb@localhost:27017/mongodb'

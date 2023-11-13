@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-
 const socketPlugin: FastifyPluginAsync = fp( async ( f ) => {
   f.get(
     '/ws',
@@ -22,5 +21,4 @@ const socketPlugin: FastifyPluginAsync = fp( async ( f ) => {
     }
   )
 } )
-
 export default socketPlugin

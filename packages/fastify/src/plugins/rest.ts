@@ -5,16 +5,20 @@ import { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts
 import { JSONSchema } from "json-schema-to-ts"
 import crypto from "crypto"
 import random from "crypto-random-string"
-import type { User, UserInfo, HRInfo, CorpInfo, JobInfo, InfoBox } from "../lib/types"
-
-const idPattern = "^\\d{17}[0-9Xx]$"
-const corpidPattern = "^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$"
-const salaryPattern = "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
-const datetimePattern = "^\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}$"
-
+import { eq, desc, and, not, like, arrayContains, inArray, sql } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
+import { users, userInfo, hrInfo, corpInfo, jobInfo, infoBox } from "../lib/schema"
+const regexp = "^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$"
 const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
-  const server = f.withTypeProvider<JsonSchemaToTsProvider>()
-
+  const server = f.withTypeProvider<JsonSchemaToTsProvider<{
+    deserialize: [ {
+      pattern: {
+        type: "string"
+        format: "date-time"
+      }
+      output: Date
+    } ]
+  }>>()
   server.get( '/',
     {
       schema: {
@@ -41,17 +45,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     async ( request, reply ) => {
       const user = request.user
       if ( user.hr ) {
-        const query = server.knex<HRInfo>( 'hrinfo' )
-          .select( 'hrid' ).where( { uuid: user.uuid } )
-        const info = await query
-          .then( ( result ) => {
-            return result
-          } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return []
-          } )
-        if ( info.length ) {
+        const info = await server.drizzle.query.hrInfo.findFirst( {
+          columns: {},
+          where: eq( hrInfo.uuid, user.uuid )
+        } ).catch( ( reason ) => {
+          server.log.error( reason )
+          return undefined
+        } )
+        if ( info ) {
           reply.send( {
             user: true,
             guide: false,
@@ -65,17 +66,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           } )
         }
       } else {
-        const query = server.knex<UserInfo>( 'userinfo' )
-          .select( 'id' ).where( { uuid: user.uuid } )
-        const info = await query
-          .then( ( result ) => {
-            return result
-          } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return []
-          } )
-        if ( info.length ) {
+        const info = await server.drizzle.query.userInfo.findFirst( {
+          columns: {},
+          where: eq( userInfo.uuid, user.uuid )
+        } ).catch( ( reason ) => {
+          server.log.error( reason )
+          return undefined
+        } )
+        if ( info ) {
           reply.send( {
             user: true,
             guide: false,
@@ -91,7 +89,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.post(
     "/",
     {
@@ -133,17 +130,13 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       hash.update( body.password )
       const password = hash.digest( "hex" )
       const hr = body.hr
-      const source = Object.create( null )
+      const source: typeof users.$inferInsert = Object.create( null )
       source.uuid = uuid
       source.email = email
       source.password = password
       source.hr = hr
-      const query = server.knex<User>( 'users' )
-        .insert( source )
-      const result = await query
-        .then( () => {
-          return true
-        } )
+      const result = await server.drizzle.insert( users ).values( source )
+        .then( () => true )
         .catch( ( reason ) => {
           server.log.error( reason )
           return false
@@ -170,7 +163,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/email-check",
     {
@@ -199,23 +191,20 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<User>( 'users' ).where( { email: request.query.email } )
-      const users = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( users.length ) {
+      const user = await server.drizzle.query.users.findFirst( {
+        columns: {},
+        where: eq( users.email, request.query.email )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( user ) {
         reply.send( { result: true } )
       } else {
         reply.send( { result: false } )
       }
     }
   )
-
   server.get(
     "/email-validate",
     {
@@ -279,7 +268,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/phone-validate",
     {
@@ -319,7 +307,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       reply.send( { result: code } )
     }
   )
-
   server.patch(
     "/email-reset",
     {
@@ -354,12 +341,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<User>( 'users' )
-        .update( { email: request.body.email } ).where( { uuid: request.user.uuid } )
-      const result = await query
-        .then( () => {
-          return true
-        } )
+
+      const result = await server.drizzle.update( users )
+        .set( { email: request.body.email } ).where( eq( users.uuid, request.user.uuid ) )
+        .then( () => true )
         .catch( ( reason ) => {
           server.log.error( reason )
           return false
@@ -367,7 +352,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       reply.send( { result: result } )
     }
   )
-
   server.patch(
     "/password-reset",
     {
@@ -410,29 +394,23 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<User>( 'users' )
-        .select( 'password' ).where( { uuid: request.user.uuid } )
-      const users = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( users.length ) {
+      const user = await server.drizzle.query.users.findFirst( {
+        columns: { password: true },
+        where: eq( users.uuid, request.user.uuid )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( user ) {
         const hash = crypto.createHash( "md5" )
         hash.update( request.body.oldPassword )
-        if ( hash.digest( "hex" ) === users[ 0 ].password ) {
+        if ( hash.digest( "hex" ) === user.password ) {
           const hash = crypto.createHash( "md5" )
           hash.update( request.body.newPassword )
           const password = hash.digest( "hex" )
-          const query = server.knex<User>( 'users' )
-            .update( { password: password } ).where( { uuid: request.user.uuid } )
-          const result = await query
-            .then( () => {
-              return true
-            } )
+          const result = await server.drizzle.update( users )
+            .set( { password: password } ).where( eq( users.uuid, request.user.uuid ) )
+            .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
@@ -458,7 +436,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.post(
     "/login",
     {
@@ -492,24 +469,21 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<User>( 'users' )
-        .select( [ "uuid", "password", "hr" ] ).where( { email: request.body.email } )
-      const users = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( users.length ) {
+      const user = await server.drizzle.query.users.findFirst( {
+        columns: { email: false },
+        where: eq( users.email, request.body.email )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( user ) {
         const hash = crypto.createHash( "md5" )
         hash.update( request.body.password )
         const password = hash.digest( "hex" )
-        if ( password === users[ 0 ].password ) {
+        if ( password === user.password ) {
           const token = await reply.jwtSign( {
-            uuid: users[ 0 ].uuid,
-            hr: users[ 0 ].hr
+            uuid: user.uuid,
+            hr: user.hr
           } )
           reply.setCookie(
             "jwt", token, {
@@ -526,7 +500,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/logout",
     {
@@ -554,7 +527,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         .send( { result: true } )
     }
   )
-
   server.get(
     "/userinfo",
     {
@@ -571,7 +543,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                       name: { type: "string" },
                       id: {
                         type: "string",
-                        pattern: idPattern
+                        pattern: "^\\d{17}[0-9Xx]$"
                       },
                       location: {
                         type: "string",
@@ -607,24 +579,20 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<UserInfo>( 'userinfo' )
-        .select( [ "name", "id", "location", "phone", "valid", "avatar", "cv" ] ).where( { uuid: request.user.uuid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( info.length ) {
-        reply.send( { result: info[ 0 ] } )
+      const info = await server.drizzle.query.userInfo.findFirst( {
+        columns: { uuid: false },
+        where: eq( userInfo.uuid, request.user.uuid )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( info ) {
+        reply.send( { result: info } )
       } else {
         reply.send( { result: null } )
       }
     }
   )
-
   server.post(
     "/userinfo",
     {
@@ -635,7 +603,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             name: { type: "string" },
             id: {
               type: "string",
-              pattern: idPattern
+              pattern: "^\\d{17}[0-9Xx]$"
             },
             location: {
               type: "string",
@@ -670,19 +638,15 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     },
     async ( request, reply ) => {
       const user = request.user
-      const source = Object.create( null )
+      const source: typeof userInfo.$inferInsert = Object.create( null )
       source.uuid = user.uuid
       source.name = request.body.name
       source.id = request.body.id
       source.location = request.body.location
       source.phone = request.body.phone
       source.avatar = request.body.avatar
-      const query = server.knex<UserInfo>( 'userinfo' )
-        .insert( source )
-      const result = await query
-        .then( () => {
-          return true
-        } )
+      const result = await server.drizzle.insert( userInfo ).values( source )
+        .then( () => true )
         .catch( ( reason ) => {
           server.log.error( reason )
           return false
@@ -690,7 +654,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       reply.send( { result: result } )
     },
   )
-
   server.patch(
     "/userinfo",
     {
@@ -728,7 +691,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const source = Object.create( null )
+      const source: { location?: string, phone?: string } = Object.create( null )
       if ( request.body.location ) {
         source.location = request.body.location
       }
@@ -736,12 +699,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         source.phone = request.body.phone
       }
       if ( Object.keys( source ).length ) {
-        const query = server.knex<UserInfo>( 'userinfo' )
-          .update( source ).where( { uuid: request.user.uuid } )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+        const result = await server.drizzle.update( userInfo )
+          .set( source ).where( eq( userInfo.uuid, request.user.uuid ) )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -752,7 +712,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/corp-check",
     {
@@ -762,7 +721,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           properties: {
             corpid: {
               type: "string",
-              pattern: corpidPattern
+              pattern: regexp
             }
           },
           required: [ "corpid" ],
@@ -787,23 +746,20 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<CorpInfo>( 'corpinfo' ).where( { corpid: request.query.corpid } )
-      const corp = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( corp.length ) {
+      const info = await server.drizzle.query.corpInfo.findFirst( {
+        columns: {},
+        where: eq( corpInfo.corpID, request.query.corpid )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( info ) {
         reply.send( { result: true } )
       } else {
         reply.send( { result: false } )
       }
     }
   )
-
   server.get(
     "/hrinfo",
     {
@@ -818,10 +774,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                     type: 'object',
                     properties: {
                       name: { type: "string" },
-                      hrid: { type: "string" },
-                      corpid: {
+                      hrID: { type: "string" },
+                      corpID: {
                         type: "string",
-                        pattern: corpidPattern
+                        pattern: regexp
                       },
                       phone: {
                         type: "string",
@@ -830,7 +786,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                       avatar: { type: "string" }
                     },
                     required: [
-                      "name", "hrid", "corpid", "phone", "avatar"
+                      "name", "hrID", "corpID", "phone", "avatar"
                     ],
                     additionalProperties: false
                   },
@@ -851,24 +807,20 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<HRInfo>( 'hrinfo' )
-        .select( [ "name", "hrid", "corpid", "phone", "avatar" ] ).where( { uuid: request.user.uuid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( info.length ) {
-        reply.send( { result: info[ 0 ] } )
+      const info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { uuid: false },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( info ) {
+        reply.send( { result: info } )
       } else {
         reply.send( { result: null } )
       }
     }
   )
-
   server.post(
     "/hrinfo",
     {
@@ -877,10 +829,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           type: 'object',
           properties: {
             name: { type: "string" },
-            hrid: { type: "string" },
-            corpid: {
+            hrID: { type: "string" },
+            corpID: {
               type: "string",
-              pattern: corpidPattern
+              pattern: regexp
             },
             phone: {
               type: "string",
@@ -888,7 +840,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             },
             avatar: { type: "string" },
           },
-          required: [ "name", "hrid", "corpid", "phone", "avatar" ],
+          required: [ "name", "hrID", "corpID", "phone", "avatar" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
@@ -910,30 +862,23 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<CorpInfo>( 'corpinfo' )
-        .select( "corpid" ).where( { corpid: request.body.corpid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
-        } )
-      if ( info.length ) {
-        const source = Object.create( null )
+      const info = await server.drizzle.query.corpInfo.findFirst( {
+        columns: {},
+        where: eq( corpInfo.corpID, request.body.corpID )
+      } ).catch( ( reason ) => {
+        server.log.error( reason )
+        return undefined
+      } )
+      if ( info ) {
+        const source: typeof hrInfo.$inferInsert = Object.create( null )
         source.uuid = request.user.uuid
         source.name = request.body.name
-        source.hrid = request.body.hrid
-        source.corpid = request.body.corpid
+        source.hrID = request.body.hrID
+        source.corpID = request.body.corpID
         source.phone = request.body.phone
         source.avatar = request.body.avatar
-        const query = server.knex<HRInfo>( 'hrinfo' )
-          .insert( source )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+        const result = await server.drizzle.insert( hrInfo ).values( source )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -944,7 +889,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.patch(
     "/hrinfo",
     {
@@ -979,12 +923,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     },
     async ( request, reply ) => {
       if ( request.body.phone ) {
-        const query = server.knex<HRInfo>( 'hrinfo' )
-          .update( { phone: request.body.phone } ).where( { uuid: request.user.uuid } )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+        const result = await server.drizzle.update( userInfo )
+          .set( { phone: request.body.phone } ).where( eq( userInfo.uuid, request.user.uuid ) )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -995,7 +936,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/corpinfo",
     {
@@ -1016,13 +956,13 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                   {
                     type: 'object',
                     properties: {
-                      corpname: { type: "string" },
+                      corpName: { type: "string" },
                       brief: { type: "string" },
                       logo: { type: "string" },
                       chiefhr: { type: "string" },
                       valid: { type: "boolean" }
                     },
-                    required: [ "corpname", "brief", "logo" ],
+                    required: [ "corpName", "brief", "logo" ],
                     additionalProperties: false
                   },
                   { type: "null" }
@@ -1034,9 +974,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                   type: "object",
                   properties: {
                     name: { type: "string" },
-                    hrid: { type: "string" }
+                    hrID: { type: "string" }
                   },
-                  required: [ "name", "hrid" ],
+                  required: [ "name", "hrID" ],
                   additionalProperties: false
                 }
               }
@@ -1055,62 +995,70 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     },
     async ( request, reply ) => {
       if ( request.query.logo ) {
-        const query = server.knex<CorpInfo>( 'corpinfo' )
-          .select( [ "corpname", "brief", "logo" ] ).where( { logo: request.query.logo } )
-        const info = await query
-          .then( ( result ) => {
-            return result
-          } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return []
-          } )
-        reply.send( { result: info[ 0 ] } )
+        const info = await server.drizzle.query.corpInfo.findFirst( {
+          columns: {
+            corpName: true,
+            brief: true,
+            logo: true
+          },
+          where: eq( corpInfo.logo, request.query.logo )
+        } ).catch( ( reason ) => {
+          server.log.error( reason )
+          return undefined
+        } )
+        if ( info ) {
+          reply.send( { result: info } )
+        } else {
+          reply.send( { result: null } )
+        }
       } else {
-        const query = server.knex<HRInfo>( 'hrinfo' )
-          .select( [ "hrid", "corpid" ] ).where( { uuid: request.user.uuid } )
-        const hrinfo = await query
-          .then( ( result ) => {
-            return result
-          } )
-          .catch( ( reason ) => {
+        const hr_info = await server.drizzle.query.hrInfo.findFirst( {
+          columns: {
+            hrID: true,
+            corpID: true
+          },
+          where: eq( hrInfo.uuid, request.user.uuid )
+        } ).catch( ( reason ) => {
+          server.log.error( reason )
+          return undefined
+        } )
+        if ( hr_info ) {
+          const corp_info = await server.drizzle.query.corpInfo.findFirst( {
+            columns: { corpID: false },
+            where: eq( corpInfo.corpID, hr_info.corpID )
+          } ).catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( hrinfo.length ) {
-          const query = server.knex<CorpInfo>( 'corpinfo' )
-            .select( "corpname", "logo", "brief", "chiefhr", "valid" ).where( { corpid: hrinfo[ 0 ].corpid } )
-          const corpinfo = await query
-            .then( ( result ) => {
-              return result
-            } )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return []
-            } )
-          if ( corpinfo[ 0 ].chiefhr === hrinfo[ 0 ].hrid ) {
-            const query = server.knex<HRInfo>( 'hrinfo' )
-              .select( [ "name", "hrid" ] ).where( { corpid: hrinfo[ 0 ].corpid } )
-            let hrs = await query
-              .then( ( result ) => {
-                return result
+          if ( corp_info ) {
+            if ( corp_info.chiefHR === hr_info.hrID ) {
+              const hrList = await server.drizzle.query.hrInfo.findMany( {
+                columns: {
+                  name: true,
+                  hrID: true
+                },
+                where: eq( hrInfo.corpID, hr_info.corpID )
               } )
-              .catch( ( reason ) => {
-                server.log.error( reason )
-                return []
+                .then( ( result ) =>
+                  result.filter( ( r ) => r.hrID !== hr_info.hrID )
+                )
+                .catch( ( reason ) => {
+                  server.log.error( reason )
+                  return []
+                } )
+              reply.send( {
+                result: corp_info,
+                addition: hrList
               } )
-            hrs = hrs.filter( ( hr ) => hr.hrid !== hrinfo[ 0 ].hrid )
-            reply.send( {
-              result: corpinfo[ 0 ],
-              addition: hrs
-            } )
+            }
+            reply.send( { result: corp_info } )
+          } else {
+            reply.send( { result: null } )
           }
-          reply.send( { result: corpinfo[ 0 ] } )
         }
       }
     }
   )
-
   server.post(
     "/corpinfo",
     {
@@ -1118,16 +1066,16 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         body: {
           type: 'object',
           properties: {
-            corpname: { type: "string" },
-            corpid: {
+            corpName: { type: "string" },
+            corpID: {
               type: "string",
-              pattern: corpidPattern
+              pattern: regexp
             },
             brief: { type: "string" },
-            chiefhr: { type: "string" },
+            chiefHR: { type: "string" },
             logo: { type: "string" },
           },
-          required: [ "corpname", "corpid", "brief", "chiefhr", "logo" ],
+          required: [ "corpName", "corpID", "brief", "chiefHR", "logo" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
@@ -1149,18 +1097,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const source = Object.create( null )
-      source.corpname = request.body.corpname
-      source.corpid = request.body.corpid
+      const source: typeof corpInfo.$inferInsert = Object.create( null )
+      source.corpName = request.body.corpName
+      source.corpID = request.body.corpID
       source.brief = request.body.brief
-      source.chiefhr = request.body.chiefhr
+      source.chiefHR = request.body.chiefHR
       source.logo = request.body.logo
-      const query = server.knex<CorpInfo>( 'corpinfo' )
-        .insert( source )
-      const result = await query
-        .then( () => {
-          return true
-        } )
+      const result = await server.drizzle.insert( corpInfo ).values( source )
+        .then( () => true )
         .catch( ( reason ) => {
           server.log.error( reason )
           return false
@@ -1168,7 +1112,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       reply.send( { result: result } )
     }
   )
-
   server.get(
     "/jobinfo",
     {
@@ -1189,10 +1132,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
               pattern: "^\\d{4}$"
             },
             logo: { type: "string" },
-            offset: {
-              type: "string",
-              pattern: "^\\d+$"
-            }
+            offset: { type: "number" }
           },
           required: [ "offset" ],
           additionalProperties: false
@@ -1213,7 +1153,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                     },
                     salary: {
                       type: "string",
-                      pattern: salaryPattern
+                      pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
                     },
                     location: {
                       type: "string",
@@ -1222,12 +1162,18 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                     no: {
                       type: "number",
                     },
-                    corpname: { type: "string" },
-                    logo: { type: "string" }
+                    corpInfo: {
+                      type: 'object',
+                      properties: {
+                        corpName: { type: "string" },
+                        logo: { type: "string" }
+                      },
+                      required: [ "corpName", "logo" ],
+                      additionalProperties: false
+                    }
                   },
                   required: [
-                    "position", "overview", "type", "salary", "location", "no",
-                    "corpname", "logo"
+                    "position", "overview", "type", "salary", "location", "no", "corpInfo"
                   ],
                   additionalProperties: false
                 }
@@ -1246,95 +1192,101 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const user = request.user
-      let jobQuery = server.knex<JobInfo>( "jobinfo" )
-        .select( "position", "overview", "type", "salary", "location", "no" )
-        .orderBy( "no" ).offset( parseInt( request.query.offset ) ).limit( 2 )
-      if ( user.hr ) {
-        const hrQuery = server.knex<HRInfo>( 'hrinfo' )
-          .select( "corpid" ).where( { "uuid": user.uuid } )
-        const hrInfo = await hrQuery
-          .then( ( result ) => {
-            return result
-          } )
+      const options: SQL[] = []
+      if ( request.user.hr ) {
+        const info = await server.drizzle.query.hrInfo.findFirst( {
+          columns: { corpID: true },
+          where: eq( hrInfo.uuid, request.user.uuid )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( !hrInfo.length ) {
+        if ( !info ) {
           reply.send( { result: [] } )
           return
         }
-        jobQuery = jobQuery.whereRaw( 'jobinfo.corpid = ?', [ hrInfo[ 0 ].corpid ] )
+        options.push( eq( jobInfo.corpID, info.corpID ) )
       } else {
-        const userQuery = server.knex<UserInfo>( 'userinfo' )
-          .select( [ "location", "cv" ] ).where( { "uuid": user.uuid } )
-        const userInfo = await userQuery
-          .then( ( result ) => {
-            return result
-          } )
+        const info = await server.drizzle.query.userInfo.findFirst( {
+          columns: {
+            location: true,
+            cv: true
+          },
+          where: eq( userInfo.uuid, request.user.uuid )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( !userInfo.length ) {
+        if ( !info ) {
           reply.send( { result: [] } )
           return
         }
-        if ( userInfo[ 0 ].cv ) {
-          jobQuery = jobQuery.whereRaw( "NOT ? = ANY (cvlist)", [ userInfo[ 0 ].cv ] )
+        if ( info.cv ) {
+          options.push( not( arrayContains( jobInfo.cvList, [ info.cv ] ) ) )
         }
         if ( request.query.position ) {
-          jobQuery = jobQuery.whereLike( "position", "%" + request.query.position + "%" )
+          options.push( like( jobInfo.position, `%${ request.query.position }%` ) )
         }
         if ( request.query.type ) {
-          jobQuery = jobQuery.where( "type", request.query.type )
+          options.push( eq( jobInfo.type, request.query.type ) )
         }
         if ( request.query.salary ) {
-          jobQuery = jobQuery.whereRaw( "salary @> ?::numeric", [ request.query.salary ] )
+          options.push( sql`jobinfo.salary @> ${ parseInt( request.query.salary ) }` )
         }
         if ( request.query.location ) {
           let location = request.query.location
           if ( location === "0000" ) {
-            location = userInfo[ 0 ].location.slice( 0, 4 )
+            location = info.location.slice( 0, 4 )
           }
-          jobQuery = jobQuery.whereRaw( "starts_with(location,?)", [ location ] )
+          options.push( sql`starts_with( jobinfo.location, ${ location } )` )
         }
         if ( request.query.logo ) {
-          const corpQuery = server.knex<CorpInfo>( 'corpinfo' )
-            .select( 'corpid' ).where( { "logo": request.query.logo } )
-          const corpInfo = await corpQuery
-            .then( ( result ) => {
-              return result
-            } )
+          const info = await server.drizzle.query.corpInfo.findFirst( {
+            columns: { corpID: true },
+            where: eq( corpInfo.logo, request.query.logo )
+          } )
             .catch( ( reason ) => {
               server.log.error( reason )
-              return []
+              return undefined
             } )
-          if ( corpInfo.length ) {
-            jobQuery = jobQuery.whereRaw( 'jobinfo.corpid = ?', [ corpInfo[ 0 ].corpid ] )
+          if ( info ) {
+            options.push( eq( jobInfo.corpID, info.corpID ) )
           }
         }
       }
-      const joinQuery = jobQuery.select( "corpname", "logo" )
-        .join<CorpInfo>( "corpinfo", { "jobinfo.corpid": "corpinfo.corpid" } )
-      const jobList = await joinQuery
-        .then( ( result ) => {
-          return result
-        } )
+      const jobList = await server.drizzle.query.jobInfo.findMany( {
+        columns: {
+          corpID: false,
+          cvList: false
+        },
+        with: {
+          corpInfo: {
+            columns: {
+              corpName: true,
+              logo: true
+            }
+          }
+        },
+        where: and( ...options ),
+        orderBy: desc( jobInfo.no ),
+        limit: 2,
+        offset: request.query.offset,
+      } )
+        .then( ( list ) =>
+          list.map( ( l ) => {
+            l.salary = l.salary.slice( 1, l.salary.length - 1 ).replace( ",", "~" )
+            return l
+          } )
+        )
         .catch( ( reason ) => {
           server.log.error( reason )
           return []
         } )
-      jobList.forEach( ( j ) => {
-        j.salary = j.salary
-          .slice( 1, j.salary.length - 1 )
-          .replace( ",", "~" )
-      } )
       reply.send( { result: jobList } )
     }
   )
-
   server.post(
     "/jobinfo",
     {
@@ -1349,7 +1301,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             },
             salary: {
               type: "string",
-              pattern: salaryPattern
+              pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
             },
             location: {
               type: "string",
@@ -1380,30 +1332,24 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const source = Object.create( null )
+      const source: typeof jobInfo.$inferInsert = Object.create( null )
       source.position = request.body.position
       source.overview = request.body.overview
       source.type = request.body.type
       source.salary = request.body.salary
       source.location = request.body.location
-      const query = server.knex<HRInfo>( 'hrinfo' )
-        .select( 'corpid' ).where( { uuid: request.user.uuid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
+      const info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { corpID: true },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
-          return []
+          return undefined
         } )
-      if ( info.length ) {
-        source.corpid = info[ 0 ].corpid
-        const query = server.knex<JobInfo>( 'jobinfo' )
-          .insert( source )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+      if ( info ) {
+        source.corpID = info.corpID
+        const result = await server.drizzle.insert( jobInfo ).values( source )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -1414,7 +1360,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.patch(
     "/jobinfo",
     {
@@ -1429,19 +1374,19 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             },
             salary: {
               type: "string",
-              pattern: salaryPattern
+              pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
             },
             location: {
               type: "string",
               pattern: "^\\d{6}$"
             },
-            corpid: {
+            corpID: {
               type: "string",
-              pattern: corpidPattern
+              pattern: regexp
             },
             no: { type: "number" }
           },
-          required: [ "corpid", "no" ],
+          required: [ "corpID", "no" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
@@ -1463,7 +1408,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const source = Object.create( null )
+      const source: Partial<Omit<typeof jobInfo.$inferInsert, "corpID" | "cvList" | "no">> = Object.create( null )
       if ( request.body.position ) {
         source.position = request.body.position
       }
@@ -1479,23 +1424,18 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       if ( request.body.location ) {
         source.location = request.body.location
       }
-      const query = server.knex<HRInfo>( 'hrinfo' )
-        .select( 'corpid' ).where( { uuid: request.user.uuid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
+      const info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { corpID: true },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
-          return []
+          return undefined
         } )
-      if ( info.length && info[ 0 ].corpid === request.body.corpid ) {
-        const query = server.knex<JobInfo>( 'jobinfo' )
-          .update( source ).where( { no: request.body.no } )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+      if ( info?.corpID === request.body.corpID ) {
+        const result = await server.drizzle.update( jobInfo )
+          .set( source ).where( eq( jobInfo.no, request.body.no ) )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -1506,7 +1446,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.delete(
     "/jobinfo",
     {
@@ -1514,13 +1453,13 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         body: {
           type: 'object',
           properties: {
-            corpid: {
+            corpID: {
               type: "string",
-              pattern: corpidPattern
+              pattern: regexp
             },
             no: { type: "number" }
           },
-          required: [ "corpid", "no" ],
+          required: [ "corpID", "no" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
@@ -1542,23 +1481,18 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const query = server.knex<HRInfo>( 'hrinfo' )
-        .select( 'corpid' ).where( { uuid: request.user.uuid } )
-      const info = await query
-        .then( ( result ) => {
-          return result
-        } )
+      const info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { corpID: true },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
-          return []
+          return undefined
         } )
-      if ( info.length && info[ 0 ].corpid === request.body.corpid ) {
-        const query = server.knex<JobInfo>( 'jobinfo' )
-          .delete().where( { no: request.body.no } )
-        const result = await query
-          .then( () => {
-            return true
-          } )
+      if ( info?.corpID === request.body.corpID ) {
+        const result = await server.drizzle.delete( jobInfo )
+          .where( eq( jobInfo.no, request.body.no ) )
+          .then( () => true )
           .catch( ( reason ) => {
             server.log.error( reason )
             return false
@@ -1569,7 +1503,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.post(
     "/image-upload",
     {
@@ -1607,7 +1540,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.patch(
     "/avatar-reset",
     {
@@ -1646,15 +1578,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         if ( result ) {
           let query
           if ( request.user.hr ) {
-            query = server.knex<HRInfo>( 'hrinfo' ).update( { avatar: fileName } )
+            query = server.drizzle.update( hrInfo )
+              .set( { avatar: fileName } ).where( eq( hrInfo.uuid, request.user.uuid ) )
           } else {
-            query = server.knex<UserInfo>( 'userinfo' ).update( { avatar: fileName } )
+            query = server.drizzle.update( userInfo )
+              .set( { avatar: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) )
           }
-          query = query.where( { uuid: request.user.uuid } )
           const result = await query
-            .then( () => {
-              return true
-            } )
+            .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
@@ -1673,7 +1604,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.post(
     "/cv-upload",
     {
@@ -1703,25 +1633,20 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         const fileName = random( { length: 10 } )
         const result = await server.saveFile( file, fileName )
         if ( result ) {
-          const query1 = server.knex<UserInfo>( 'userinfo' )
-            .select( 'cv' ).where( { uuid: request.user.uuid } )
-          const info = await query1
-            .then( ( result ) => {
-              return result
-            } )
+          const info = await server.drizzle.query.userInfo.findFirst( {
+            columns: { cv: true },
+            where: eq( userInfo.uuid, request.user.uuid )
+          } )
             .catch( ( reason ) => {
               server.log.error( reason )
-              return []
+              return undefined
             } )
-          if ( info[ 0 ].cv ) {
-            await server.deleteFile( "PDF", info[ 0 ].cv + ".pdf" )
+          if ( info?.cv ) {
+            await server.deleteFile( "PDF", info.cv + ".pdf" )
           }
-          const query2 = server.knex<UserInfo>( 'userinfo' )
-            .update( { cv: fileName } ).where( { uuid: request.user.uuid } )
-          const result = await query2
-            .then( () => {
-              return true
-            } )
+          const result = await server.drizzle.update( userInfo )
+            .set( { cv: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) )
+            .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
@@ -1735,7 +1660,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/cv-deliver",
     {
@@ -1743,10 +1667,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         querystring: {
           type: 'object',
           properties: {
-            no: {
-              type: "string",
-              pattern: "^\\d+$"
-            }
+            no: { type: "number" }
           },
           required: [ "no" ],
           additionalProperties: false
@@ -1770,45 +1691,40 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const userQuery = server.knex<UserInfo>( 'userinfo' )
-        .select( 'cv' ).where( { uuid: request.user.uuid } )
-      const userInfo = await userQuery
-        .then( ( result ) => {
-          return result
-        } )
+      const info = await server.drizzle.query.userInfo.findFirst( {
+        columns: { cv: true },
+        where: eq( userInfo.uuid, request.user.uuid )
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
-          return []
+          return undefined
         } )
-      if ( userInfo[ 0 ].cv ) {
-        const jobQuery = server.knex<JobInfo>( 'jobinfo' )
-          .select( 'no' ).where( { no: parseInt( request.query.no ) } ).whereRaw( "? = ANY (cvlist)", [ userInfo[ 0 ].cv ] )
-        const jobInfo = await jobQuery
-          .then( ( result ) => {
-            return result
-          } )
+      if ( info?.cv ) {
+        const job_info = await server.drizzle.query.jobInfo.findFirst( {
+          columns: { no: true },
+          where: and(
+            eq( jobInfo.no, request.query.no ),
+            arrayContains( jobInfo.cvList, [ info.cv ] )
+          )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( !jobInfo.length ) {
-          const jobQuery = server.knex<JobInfo>( 'jobinfo' )
-            .update( "cvlist", server.knex.raw( "array_append(cvlist, ?)", userInfo[ 0 ].cv ) )
-            .where( { no: parseInt( request.query.no ) } )
-          const result = await jobQuery
+        if ( !job_info ) {
+          const result = await server.drizzle.update( jobInfo )
+            .set( { cvList: sql`array_append( jobinfo.cvlist, ${ info.cv } )` } )
+            .where( eq( jobInfo.no, request.query.no ) )
             .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
             } )
           reply.send( { result: result } )
-        } else {
-          reply.send( { result: false } )
         }
       }
     }
   )
-
   server.get(
     "/cv-receive",
     {
@@ -1816,10 +1732,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         querystring: {
           type: 'object',
           properties: {
-            no: {
-              type: "string",
-              pattern: "^\\d+$"
-            }
+            no: { type: "number" }
           },
           required: [ "no" ],
           additionalProperties: false
@@ -1854,40 +1767,39 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const user = request.user
-      const hrQuery = server.knex<HRInfo>( 'hrinfo' )
-        .select( 'corpid' ).where( { uuid: user.uuid } )
-      const hrInfo = await hrQuery
-        .then( ( result ) => {
-          return result
-        } )
+      const hr_info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { corpID: true },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
-          return []
+          return undefined
         } )
-      if ( hrInfo.length ) {
-        const jobQuery = server.knex<JobInfo>( 'jobinfo' )
-          .select( [ "corpid", "cvlist" ] ).where( { no: parseInt( request.query.no ) } )
-        const jobInfo = await jobQuery
-          .then( ( result ) => {
-            return result
-          } )
+      if ( hr_info ) {
+        const job_info = await server.drizzle.query.jobInfo.findFirst( {
+          columns: {
+            corpID: true,
+            cvList: true
+          },
+          where: eq( jobInfo.no, request.query.no )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( hrInfo[ 0 ].corpid === jobInfo[ 0 ].corpid ) {
-          const userQuery = server.knex<UserInfo>( 'userinfo' )
-            .select( [ "name", "cv" ] ).whereRaw( "cv = any(?)", [ jobInfo[ 0 ].cvlist ] )
-          const userInfo = await userQuery
-            .then( ( result ) => {
-              return result
-            } )
+        if ( hr_info.corpID === job_info?.corpID ) {
+          const user_info = await server.drizzle.query.userInfo.findMany( {
+            columns: {
+              name: true,
+              cv: true
+            },
+            where: inArray( userInfo.cv, job_info.cvList )
+          } )
             .catch( ( reason ) => {
               server.log.error( reason )
               return []
             } )
-          reply.send( { result: userInfo } )
+          reply.send( { result: user_info } )
         } else {
           reply.send( { result: [] } )
         }
@@ -1896,7 +1808,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
   )
-
   server.post(
     "/cv-remove/:state",
     {
@@ -1920,7 +1831,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             corpname: { type: "string" },
             datetime: {
               type: "string",
-              pattern: datetimePattern
+              pattern: "^\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}$"
             },
             location: { type: "string" }
           },
@@ -1948,29 +1859,31 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     async ( request, reply ) => {
       if ( request.user.hr ) {
         let result = false
-        const userQuery = server.knex<UserInfo>( 'userinfo' )
-          .select( [ "name", "uuid" ] ).where( { cv: request.body.cv } )
-        const userInfo = await userQuery
-          .then( ( result ) => {
-            return result
-          } )
+        const user_info = await server.drizzle.query.userInfo.findFirst( {
+          columns: {
+            name: true,
+            uuid: true
+          },
+          where: eq( userInfo.cv, request.body.cv )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        const jobQuery = server.knex<JobInfo>( 'jobinfo' )
-          .select( [ "corpid", "position" ] ).where( { no: request.body.no } )
-        const jobInfo = await jobQuery
-          .then( ( result ) => {
-            return result
-          } )
+        const job_info = await server.drizzle.query.jobInfo.findFirst( {
+          columns: {
+            corpID: true,
+            position: true
+          },
+          where: eq( jobInfo.no, request.body.no )
+        } )
           .catch( ( reason ) => {
             server.log.error( reason )
-            return []
+            return undefined
           } )
-        if ( userInfo.length && jobInfo.length ) {
-          const source = Object.create( null )
-          source.uuid = userInfo[ 0 ].uuid
+        if ( user_info && job_info ) {
+          const source: { uuid: string, info: string } = Object.create( null )
+          source.uuid = user_info.uuid
           if (
             request.params.state === "welcome" &&
             request.body.datetime &&
@@ -1981,43 +1894,26 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             datetime[ 1 ] += "月"
             datetime[ 2 ] += "日"
             const time = datetime.join( "" )
-            const info = `
-              尊敬的${ userInfo[ 0 ].name }先生, 很高兴的通知您, 您申请的${ request.body.corpname }公司的${ jobInfo[ 0 ].position }职位已通过简历筛选, 现邀请您参加面试.
+            source.info = `
+              尊敬的${ user_info.name }先生, 很高兴的通知您, 您申请的${ request.body.corpname }公司的${ job_info.position }职位已通过简历筛选, 现邀请您参加面试.
               请您于${ time }携带简历到${ request.body.location }参加面试.
               `
-            source.info = info
-            const query = server.knex<InfoBox>( 'infobox' )
-              .insert( source )
-            result = await query
-              .then( () => {
-                return true
-              } )
-              .catch( ( reason ) => {
-                server.log.error( reason )
-                return false
-              } )
           } else if ( request.params.state === "refuse" ) {
-            const info = `
-              尊敬的${ userInfo[ 0 ].name }先生, 很抱歉的通知您, 您申请的${ request.body.corpname }公司的${ jobInfo[ 0 ].position }职位未通过简历筛选, 请选择其他合适的职位.
+            source.info = `
+              尊敬的${ user_info.name }先生, 很抱歉的通知您, 您申请的${ request.body.corpname }公司的${ job_info.position }职位未通过简历筛选, 请选择其他合适的职位.
               `
-            source.info = info
-            const query = server.knex<InfoBox>( 'infobox' )
-              .insert( source )
-            result = await query
-              .then( () => {
-                return true
-              } )
-              .catch( ( reason ) => {
-                server.log.error( reason )
-                return false
-              } )
           }
+          result = await server.drizzle.insert( infoBox ).values( source )
+            .then( () => true )
+            .catch( ( reason ) => {
+              server.log.error( reason )
+              return false
+            } )
         }
         if ( result ) {
-          const query = server.knex<JobInfo>( 'jobinfo' )
-            .update( "cvlist", server.knex.raw( "array_remove(cvlist, ?)", request.body.cv ) )
-            .where( { no: request.body.no } )
-          result = await query
+          result = await server.drizzle.update( jobInfo )
+            .set( { cvList: sql`array_remove( jobinfo.cvlist, ${ request.body.cv } )` } )
+            .where( eq( jobInfo.no, request.body.no ) )
             .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
@@ -2030,7 +1926,6 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     }
   )
-
   server.get(
     "/infobox",
     {
@@ -2038,10 +1933,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         querystring: {
           type: 'object',
           properties: {
-            offset: {
-              type: "string",
-              pattern: "^\\d+$"
-            }
+            offset: { type: "number" }
           },
           required: [ "offset" ],
           additionalProperties: false
@@ -2057,7 +1949,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                   properties: {
                     info: { type: "string" },
                     read: { type: "boolean" },
-                    time: { type: "string" },
+                    time: {
+                      type: "string",
+                      format: "date-time"
+                    },
                     no: {
                       type: "number",
                       minimum: 1
@@ -2081,28 +1976,23 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const offset = request.query.offset
-      const query = server.knex<InfoBox>( 'infobox' )
-        .select( [ 'info', 'read', 'time', 'no' ] ).where( { uuid: request.user.uuid } )
-        .orderBy( 'no', 'desc' ).limit( 2 ).offset( parseInt( offset ) )
-      let infoList = await query
-        .then( ( result ) => {
-          return result
-        } )
+      const list = await server.drizzle.query.infoBox.findMany( {
+        columns: { uuid: false },
+        where: eq( infoBox.uuid, request.user.uuid ),
+        orderBy: [ desc( infoBox.no ) ],
+        limit: 2,
+        offset: request.query.offset
+      } )
         .catch( ( reason ) => {
           server.log.error( reason )
           return []
         } )
-      infoList = infoList.map( ( value ) => {
-        value.time = value.time.toLocaleString()
-        return value
-      } )
+
       reply.send( {
-        result: infoList
+        result: list
       } )
     }
   )
-
   server.get(
     "/infobox/:action",
     {
@@ -2118,10 +2008,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         querystring: {
           type: 'object',
           properties: {
-            no: {
-              type: "string",
-              pattern: "^\\d+$"
-            }
+            no: { type: "number" }
           },
           required: [ "no" ],
           additionalProperties: false
@@ -2146,29 +2033,24 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     },
     async ( request, reply ) => {
       if ( !request.user.hr ) {
-        const options = Object.create( null )
-        options.uuid = request.user.uuid
-        options.no = parseInt( request.query.no )
         let result = false
+        const options = and(
+          eq( infoBox.uuid, request.user.uuid ),
+          eq( infoBox.no, request.query.no )
+        )
         if ( request.params.action === "read" ) {
-          const query = server.knex<InfoBox>( 'infobox' )
-            .update( { read: true } ).where( options )
-          result = await query
-            .then( () => {
-              return true
-            } )
+          result = await server.drizzle.update( infoBox )
+            .set( { read: true } ).where( options )
+            .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
             } )
         }
         if ( request.params.action === "remove" ) {
-          const query = server.knex<InfoBox>( 'infobox' )
-            .delete().where( options )
-          result = await query
-            .then( () => {
-              return true
-            } )
+          result = await server.drizzle.delete( infoBox )
+            .where( options )
+            .then( () => true )
             .catch( ( reason ) => {
               server.log.error( reason )
               return false
@@ -2181,5 +2063,4 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
     }
   )
 } )
-
 export default restPlugin

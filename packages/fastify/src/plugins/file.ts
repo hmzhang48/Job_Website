@@ -3,14 +3,12 @@ import fp from "fastify-plugin"
 import type { MultipartFile } from "@fastify/multipart"
 import fs from "fs/promises"
 import stream from "stream/promises"
-
 declare module "fastify" {
   interface FastifyInstance {
     saveFile: ( file: MultipartFile, fileName: string ) => Promise<boolean>
     deleteFile: ( fileType: string, fileName: string ) => Promise<void>
   }
 }
-
 const filePlugin: FastifyPluginAsync = fp( async ( f ) => {
   f.decorate( 'saveFile', async ( file: MultipartFile, fileName: string ) => {
     const imageType = /^image\/png$/
@@ -40,5 +38,4 @@ const filePlugin: FastifyPluginAsync = fp( async ( f ) => {
       } )
   } )
 } )
-
 export default filePlugin

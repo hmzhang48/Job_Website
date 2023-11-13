@@ -1,0 +1,447 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "id": "993e9ae9-7cdd-43e6-bef9-ee6bda17fc3f",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "corpinfo": {
+      "name": "corpinfo",
+      "schema": "",
+      "columns": {
+        "corpname": {
+          "name": "corpname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "corpid": {
+          "name": "corpid",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "logo": {
+          "name": "logo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "brief": {
+          "name": "brief",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chiefhr": {
+          "name": "chiefhr",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valid": {
+          "name": "valid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "corpinfo_logo_unique": {
+          "name": "corpinfo_logo_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "logo"
+          ]
+        }
+      }
+    },
+    "hrinfo": {
+      "name": "hrinfo",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hrid": {
+          "name": "hrid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "corpid": {
+          "name": "corpid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar": {
+          "name": "avatar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hrinfo_corpid_corpinfo_corpid_fk": {
+          "name": "hrinfo_corpid_corpinfo_corpid_fk",
+          "tableFrom": "hrinfo",
+          "tableTo": "corpinfo",
+          "columnsFrom": [
+            "corpid"
+          ],
+          "columnsTo": [
+            "corpid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "hrinfo_uuid_users_uuid_fk": {
+          "name": "hrinfo_uuid_users_uuid_fk",
+          "tableFrom": "hrinfo",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uuid"
+          ],
+          "columnsTo": [
+            "uuid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hrinfo_avatar_unique": {
+          "name": "hrinfo_avatar_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "avatar"
+          ]
+        },
+        "hrinfo_phone_unique": {
+          "name": "hrinfo_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone"
+          ]
+        }
+      }
+    },
+    "infobox": {
+      "name": "infobox",
+      "schema": "",
+      "columns": {
+        "uuid": {
+          "name": "uuid",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "info": {
+          "name": "info",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "name": "time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "no": {
+          "name": "no",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "infobox_uuid_users_uuid_fk": {
+          "name": "infobox_uuid_users_uuid_fk",
+          "tableFrom": "infobox",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uuid"
+          ],
+          "columnsTo": [
+            "uuid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "jobinfo": {
+      "name": "jobinfo",
+      "schema": "",
+      "columns": {
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "jobtype",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salary": {
+          "name": "salary",
+          "type": "numrange",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "overview": {
+          "name": "overview",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "corpid": {
+          "name": "corpid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "no": {
+          "name": "no",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cvlist": {
+          "name": "cvlist",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": []
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jobinfo_corpid_corpinfo_corpid_fk": {
+          "name": "jobinfo_corpid_corpinfo_corpid_fk",
+          "tableFrom": "jobinfo",
+          "tableTo": "corpinfo",
+          "columnsFrom": [
+            "corpid"
+          ],
+          "columnsTo": [
+            "corpid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "userinfo": {
+      "name": "userinfo",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar": {
+          "name": "avatar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cv": {
+          "name": "cv",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "valid": {
+          "name": "valid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "userinfo_uuid_users_uuid_fk": {
+          "name": "userinfo_uuid_users_uuid_fk",
+          "tableFrom": "userinfo",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uuid"
+          ],
+          "columnsTo": [
+            "uuid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "userinfo_id_unique": {
+          "name": "userinfo_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        },
+        "userinfo_avatar_unique": {
+          "name": "userinfo_avatar_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "avatar"
+          ]
+        },
+        "userinfo_phone_unique": {
+          "name": "userinfo_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone"
+          ]
+        },
+        "userinfo_location_unique": {
+          "name": "userinfo_location_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "location"
+          ]
+        },
+        "userinfo_cv_unique": {
+          "name": "userinfo_cv_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "cv"
+          ]
+        }
+      }
+    },
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hr": {
+          "name": "hr",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {
+    "jobtype": {
+      "name": "jobtype",
+      "values": {
+        "full-time": "full-time",
+        "part-time": "part-time"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}

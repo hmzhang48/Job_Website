@@ -1,6 +1,5 @@
 import { domain } from "./help.js"
 import type { province, city, area } from "./help.js"
-
 interface User {
   email: string
   password: string
@@ -81,14 +80,12 @@ export const validPhone = async ( phone: string ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: string | null } ) => value.result )
 }
-
 export const areas: area[] = await fetch( domain + "/fastify/JSON/areas.json" )
   .then( ( response ) => response.json() )
 export const cities: city[] = await fetch( domain + "/fastify/JSON/cities.json" )
   .then( ( response ) => response.json() )
 export const provinces: province[] = await fetch( domain + "/fastify/JSON/provinces.json" )
   .then( ( response ) => response.json() )
-
 export const uploadImage = async ( formData: FormData ) => {
   return fetch( domain + "/fastify/image-upload", {
     method: "POST",
@@ -98,7 +95,6 @@ export const uploadImage = async ( formData: FormData ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: string } ) => value.result )
 }
-
 export const resetAvatar = async ( formData: FormData, fileName: string | undefined ) => {
   if ( fileName ) {
     return fetch( domain + "/fastify/avatar-reset?fileName=" + fileName, {
@@ -150,8 +146,8 @@ export const existCorp = async ( corpid: string ) => {
     .then( ( value: { result: boolean } ) => value.result )
 }
 interface hrInfo extends info {
-  hrid: string
-  corpid: string
+  hrID: string
+  corpID: string
 }
 export const getHRInfo = async () => {
   return fetch( domain + "/fastify/hrinfo", {
@@ -171,16 +167,12 @@ export const postHRInfo = async ( hrInfo: hrInfo ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: boolean } ) => value.result )
 }
-interface corpInfo1 {
-  corpname: string
+interface corpInfo {
+  corpName: string
   logo: string
-  corpid: string
+  corpID: string
   brief: string
-  chiefhr: string
-}
-type hr = Pick<hrInfo, "name" | "hrid">
-interface corpInfo2 extends Omit<corpInfo1, "corpid" | "chiefhr"> {
-  valid?: boolean
+  chiefHR: string
 }
 export const getCorpInfo = async ( logo?: string ) => {
   let url = domain + "/fastify/corpinfo"
@@ -192,9 +184,12 @@ export const getCorpInfo = async ( logo?: string ) => {
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: corpInfo2, addition?: hr[] } ) => value )
+    .then( ( value: {
+      result: Omit<corpInfo, "corpID" | "chiefHR"> & { valid?: boolean },
+      addition?: Pick<hrInfo, "name" | "hrID">[]
+    } ) => value )
 }
-export const postCorpInfo = async ( corpInfo: corpInfo1 ) => {
+export const postCorpInfo = async ( corpInfo: corpInfo ) => {
   return fetch( domain + "/fastify/corpinfo", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -204,22 +199,22 @@ export const postCorpInfo = async ( corpInfo: corpInfo1 ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: boolean } ) => value.result )
 }
-interface shared {
+export interface jobInfo {
   position: string
+  overview: string
   type: string
   salary: string
   location: string
-  logo: string
 }
-export interface condition extends shared {
-  offset: string
-}
-export interface jobItem extends shared {
-  overview: string
+export interface jobItem extends jobInfo {
   no: number
-  corpname: string
+  corpInfo: {
+    corpName: string
+    logo: string
+  }
 }
-export const getJobList = async ( c: Partial<condition> ) => {
+export const getJobList = async (
+  c: Partial<Omit<jobInfo, "overview">> & { logo?: string, offset?: number } ) => {
   let url = domain + "/fastify/jobinfo?"
   for ( const [ key, value ] of Object.entries( c ) ) {
     url = url + `${ key }=${ value }` + "&"
@@ -241,9 +236,6 @@ export const getJobList = async ( c: Partial<condition> ) => {
       return value.result
     } )
 }
-export interface jobInfo extends Omit<shared, "corp"> {
-  overview: string
-}
 export const finishJob = async ( jobInfo: jobInfo ) => {
   return fetch( domain + "/fastify/jobinfo", {
     method: "POST",
@@ -254,11 +246,8 @@ export const finishJob = async ( jobInfo: jobInfo ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: boolean } ) => value.result )
 }
-interface newJobInfo extends Partial<jobInfo> {
-  no: number,
-  corpID: string
-}
-export const patchJob = async ( jobInfo: newJobInfo ) => {
+export const patchJob = async (
+  jobInfo: Partial<jobInfo> & { no: number, corpID: string } ) => {
   return fetch( domain + "/fastify/jobinfo", {
     method: "PATCH",
     headers: { "content-type": "application/json" },
@@ -296,7 +285,6 @@ export const patchInfo = async ( target: "userinfo" | "hrinfo", phone?: string, 
     .then( ( response ) => response.json() )
     .then( ( value: { result: boolean } ) => value.result )
 }
-
 export const uploadCV = async ( file: File ) => {
   const formData = new FormData()
   formData.append( "cv", file )
@@ -314,7 +302,6 @@ export const uploadCV = async ( file: File ) => {
       }
     } )
 }
-
 export const deliverCV = async ( no: number ) => {
   return fetch( `${ domain }/fastify/cv-deliver?no=${ no.toString() }`, {
     method: "GET",
@@ -369,7 +356,6 @@ export const getInfoBox = async ( offset: number ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: infoItem[] } ) => value.result )
 }
-
 export const changeInfoBox = async ( no: number, action: string ) => {
   return fetch( `${ domain }/fastify/infobox/${ action }?no=${ no.toString() }`, {
     method: "GET",

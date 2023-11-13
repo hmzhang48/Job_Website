@@ -4,7 +4,6 @@ DROP TABLE hrinfo;
 DROP TABLE corpinfo;
 DROP TABLE userinfo;
 DROP TABLE users;
-
 CREATE TABLE users (
     email     text NOT NULL,
     password  text NOT NULL,
@@ -13,7 +12,6 @@ CREATE TABLE users (
     PRIMARY KEY ( uuid ),
     UNIQUE ( email )
 );
-
 CREATE TABLE userinfo (
     name      text NOT NULL,
     id        text NOT NULL,
@@ -26,7 +24,6 @@ CREATE TABLE userinfo (
     PRIMARY KEY ( uuid ),
     UNIQUE ( id, avatar, phone, cv )
 );
-
 CREATE TABLE hrinfo (
     name      text NOT NULL,
     hrid      text NOT NULL,
@@ -37,7 +34,6 @@ CREATE TABLE hrinfo (
     PRIMARY KEY ( uuid ),
     UNIQUE ( avatar, phone )
 );
-
 CREATE TABLE corpinfo (
     corpname  text NOT NULL,
     corpid    text NOT NULL,
@@ -48,9 +44,7 @@ CREATE TABLE corpinfo (
     PRIMARY KEY ( corpid ),
     UNIQUE ( logo )
 );
-
 CREATE TYPE jobtype AS ENUM ( 'full-time', 'part-time' );
-
 CREATE TABLE jobinfo (
     position  text NOT NULL,
     type      jobtype NOT NULL,
@@ -61,7 +55,6 @@ CREATE TABLE jobinfo (
     no        serial,
     cvlist    text[] NOT NULL DEFAULT '{}'
 );
-
 CREATE TABLE infobox (
     uuid      uuid NOT NULL,
     info      text NOT NULL,
@@ -69,7 +62,6 @@ CREATE TABLE infobox (
     read      boolean NOT NULL DEFAULT false,
     no        serial
 );
-
 ALTER TABLE userinfo ADD FOREIGN KEY ( uuid ) REFERENCES users( uuid );
 ALTER TABLE hrinfo ADD FOREIGN KEY ( uuid ) REFERENCES users( uuid );
 ALTER TABLE infobox ADD FOREIGN KEY ( uuid ) REFERENCES users( uuid );

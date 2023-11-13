@@ -1,13 +1,11 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import mailer from "nodemailer"
-
 declare module "fastify" {
   interface FastifyInstance {
     mail: mailer.Transporter
   }
 }
-
 const mailPlugin: FastifyPluginAsync = fp( async ( f ) => {
   const testAccount = await mailer.createTestAccount()
   const transporter = mailer.createTransport( {
@@ -25,5 +23,4 @@ const mailPlugin: FastifyPluginAsync = fp( async ( f ) => {
     f.mail.close()
   } )
 } )
-
 export default mailPlugin

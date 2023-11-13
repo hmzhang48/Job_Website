@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-
 export const useValidStore =
   defineStore( 'valid', () => {
     const validState = ref( false )
