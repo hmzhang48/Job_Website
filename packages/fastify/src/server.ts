@@ -1,22 +1,16 @@
-import { fastify } from "fastify"
+import fastify from "fastify"
 import sensible from "@fastify/sensible"
 import helmet from "@fastify/helmet"
 import autoLoad from '@fastify/autoload'
-//import cors from "@fastify/cors"
-//import session from "@fastify/secure-session"
-//import csrf from "@fastify/csrf-protection"
 import jwt from "@fastify/jwt"
-//import buildGetJwks from "get-jwks"
 import cookie from "@fastify/cookie"
 import staticfile from "@fastify/static"
 import multipart from "@fastify/multipart"
 import websocket from "@fastify/websocket"
-//import mongo from "@fastify/mongodb"
-//import pg from "@fastify/postgres"
-//import fs from "fs/promises"
-import path from "path"
-import url from 'url'
+import path from "node:path"
+import url from 'node:url'
 const server = fastify( {
+  http2: true,
   ajv: {
     customOptions: {
       strict: "log",
@@ -42,30 +36,14 @@ server.register( autoLoad, {
   dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), 'plugins' ),
   forceESM: true
 } )
-/*
-server.register( cors, {
-  origin: "http://localhost:5173",
-  methods: [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ],
-  credentials: true
-} )
-server.register( session, {
-  key: await fs.readFile( path.resolve( "./secret-key" ) ),
-  cookie: {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 60 * 60 * 24
-  }
-} )
-server.register( csrf, {
-  sessionPlugin: '@fastify/secure-session'
-} )
-*/
 server.register( jwt, {
   secret: "secret",
   cookie: {
     cookieName: 'jwt',
     signed: true
+  },
+  formatUser: ( payload ) => {
+    return JSON.parse( payload )
   }
 } )
 server.register( cookie, {
@@ -76,27 +54,12 @@ server.register( staticfile, {
 } )
 server.register( multipart, {
   limits: {
-    fileSize: 1048576,
+    fileSize: 1_048_576,
   }
 } )
 server.register( websocket, {
   options: {
-    maxPayload: 1048576
+    maxPayload: 1_048_576
   }
 } )
-/*
-server.register( mongo, {
-  forceClose: true,
-  url: 'mongodb://mongodb:mongodb@localhost:27017/mongodb'
-} )
-
-server.register( pg, {
-  connectionString: 'postgresql://postgre:postgre@localhost:5432/postgre'
-} )
-*/
-server.listen( { port: 3000 }, ( err ) => {
-  if ( err ) {
-    server.log.error( err )
-    process.exit( 1 )
-  }
-} )
+export default server

@@ -5,15 +5,17 @@
   "type": "module",
   "scripts": {
     "compile": "tsc",
+    "test": "ava",
     "generate": "drizzle-kit generate:pg",
     "drop": "drizzle-kit drop",
     "migrate": "node ./dist/lib/migration.js",
-    "start": "node ./dist/server.js"
+    "start": "node ./dist/app.js"
   },
   "dependencies": {
+    "@fastify/auth": "^4.4.0",
     "@fastify/autoload": "^5.8.0",
     "@fastify/awilix": "^3.2.0",
-    "@fastify/cookie": "^9.1.0",
+    "@fastify/cookie": "^9.2.0",
     "@fastify/cors": "^8.4.1",
     "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^11.1.1",
@@ -23,6 +25,7 @@
     "@fastify/postgres": "^5.2.2",
     "@fastify/secure-session": "^7.1.0",
     "@fastify/sensible": "^5.5.0",
+    "@fastify/session": "^10.5.0",
     "@fastify/static": "^6.12.0",
     "@fastify/type-provider-json-schema-to-ts": "^2.2.2",
     "@fastify/view": "^8.2.0",
@@ -34,11 +37,11 @@
     "fastify-plugin": "^4.5.1",
     "fluent-json-schema": "^4.2.1",
     "get-jwks": "^8.3.1",
+    "got": "^13.0.0",
     "graphql": "^16.8.1",
     "json-schema-to-ts": "^2.9.2",
-    "knex": "^3.0.1",
-    "mercurius": "^13.2.2",
-    "mongodb": "^6.2.0",
+    "mercurius": "^13.3.1",
+    "mongodb": "^6.3.0",
     "nodemailer": "^6.9.7",
     "pg": "^8.11.3",
     "postgres": "^3.4.3"
@@ -47,7 +50,7 @@
     "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.10.9",
     "@types/ws": "^8.5.9",
-    "drizzle-kit": "^0.19.13",
+    "drizzle-kit": "^0.20.4",
     "pino-pretty": "^10.2.3"
   },
   "eslintConfig": {
@@ -61,11 +64,26 @@
     },
     "plugins": [
       "@typescript-eslint",
-      "@stylistic/ts"
+      "@stylistic/ts",
+      "unicorn",
+      "ava"
     ],
     "extends": [
       "eslint:recommended",
-      "plugin:@typescript-eslint/recommended"
+      "plugin:@typescript-eslint/recommended",
+      "plugin:unicorn/recommended",
+      "plugin:ava/recommended"
     ]
+  },
+  "ava": {
+    "files": [
+      "src/test/*"
+    ],
+    "typescript": {
+      "rewritePaths": {
+        "src/": "dist/"
+      },
+      "compile": "tsc"
+    }
   }
 }

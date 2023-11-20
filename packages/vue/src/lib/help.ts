@@ -13,71 +13,61 @@ export interface area extends city {
 }
 export const initProvince = ( province?: HTMLSelectElement ) => {
   if ( province ) {
-    provinces.forEach( ( value ) => {
+    for ( const value of provinces ) {
       const option = document.createElement( "option" )
       option.value = value.code
       option.text = value.name
       province.add( option )
-    } )
+    }
   }
 }
-export const initCity =
-  ( province?: HTMLSelectElement, city?: HTMLSelectElement, area?: HTMLSelectElement ) => {
-    if ( province && city ) {
-      const code = province.value
-      removeOption( city )
-      removeOption( area )
-      const data = cities.filter( ( value ) => value.provinceCode === code )
-      data.forEach( ( value ) => {
-        const option = document.createElement( "option" )
-        option.value = value.code
-        option.text = value.name
-        city.add( option )
-      } )
+export const initCity = ( province?: HTMLSelectElement, city?: HTMLSelectElement, area?: HTMLSelectElement ) => {
+  if ( province && city ) {
+    const code = province.value
+    removeOption( city )
+    removeOption( area )
+    const data = cities.filter( ( value ) => value.provinceCode === code )
+    for ( const value of data ) {
+      const option = document.createElement( "option" )
+      option.value = value.code
+      option.text = value.name
+      city.add( option )
     }
   }
-export const initArea =
-  ( city?: HTMLSelectElement, area?: HTMLSelectElement ) => {
-    if ( city && area ) {
-      const code = city.value
-      removeOption( area )
-      const data = areas.filter( ( value ) => value.cityCode === code )
-      data.forEach( ( value ) => {
-        const option = document.createElement( "option" )
-        option.value = value.code
-        option.text = value.name
-        area.add( option )
-      } )
+}
+export const initArea = ( city?: HTMLSelectElement, area?: HTMLSelectElement ) => {
+  if ( city && area ) {
+    const code = city.value
+    removeOption( area )
+    const data = areas.filter( ( value ) => value.cityCode === code )
+    for ( const value of data ) {
+      const option = document.createElement( "option" )
+      option.value = value.code
+      option.text = value.name
+      area.add( option )
     }
   }
+}
 const removeOption = ( element?: HTMLSelectElement ) => {
   if ( element ) {
     const l = element.length
-    for ( let i = 1; i < l; i++ ) {
+    for ( let index = 1; index < l; index++ ) {
       element.remove( 1 )
     }
   }
 }
 export const trueLocation = ( code: string ) => {
-  const areaData = areas.filter( ( value ) => value.code === code )
-  const cityData = cities.filter( ( value ) => value.code === areaData[ 0 ].cityCode )
-  const provinceData = provinces.filter( ( value ) => value.code === areaData[ 0 ].provinceCode )
-  return provinceData[ 0 ].name + cityData[ 0 ].name + areaData[ 0 ].name
+  const area = areas.find( ( value ) => value.code === code )
+  const city = cities.find( ( value ) => value.code === area?.cityCode )
+  const province = provinces.find( ( value ) => value.code === area?.provinceCode )
+  return province && city && area ? province.name + city.name + area.name : ""
 }
 export const trueType = ( type: string ) => {
-  if ( type === "full-time" ) {
-    return "全职"
-  } else {
-    return "兼职"
-  }
+  return type === "full-time" ? "全职" : "兼职"
 }
 export const loadImage = async ( source: string | Blob ) => {
   const image = new Image( 128, 128 )
-  if ( typeof source === "string" ) {
-    image.src = source
-  } else {
-    image.src = URL.createObjectURL( source )
-  }
+  image.src = typeof source === "string" ? source : URL.createObjectURL( source )
   return new Promise( ( resolve: ( value: HTMLImageElement ) => void ) => {
     image.addEventListener( "load", () => {
       resolve( image )
@@ -148,19 +138,18 @@ const initContext = ( canvas: HTMLCanvasElement ) => {
   }
   return context
 }
-const preview =
-  ( context: CanvasRenderingContext2D, image: HTMLImageElement, position: { x: number, y: number }, scale: number ) => {
-    context.clearRect( 0, 0, 128, 128 )
-    context.drawImage( image, position.x, position.y, 128 * scale, 128 * scale )
-  }
+const preview = ( context: CanvasRenderingContext2D, image: HTMLImageElement, position: { x: number, y: number }, scale: number ) => {
+  context.clearRect( 0, 0, 128, 128 )
+  context.drawImage( image, position.x, position.y, 128 * scale, 128 * scale )
+}
 export const useObserver = ( element: Ref<HTMLElement | undefined>, f: () => Promise<void>, end: Ref<boolean> ) => {
   const observer = new IntersectionObserver(
     async ( entries ) => {
-      entries.forEach( async () => {
-        if ( !end.value ) {
+      for ( const entry of entries ) {
+        if ( entry.intersectionRatio === 1 && !end.value ) {
           await f()
         }
-      } )
+      }
     },
     { threshold: [ 1 ] }
   )
@@ -169,7 +158,6 @@ export const useObserver = ( element: Ref<HTMLElement | undefined>, f: () => Pro
       observer.observe( element.value )
     }
   } )
-
   onUnmounted( () => {
     observer.disconnect()
   } )

@@ -6,7 +6,7 @@ interface User {
   hr: boolean
 }
 export const register = async ( user: User ) => {
-  return fetch( domain + "/fastify/", {
+  return fetch( domain + "/fastify/register", {
     method: "POST",
     headers: {
       "content-type": "application/json"
@@ -26,8 +26,12 @@ export const login = async ( user: Omit<User, "hr"> ) => {
     credentials: 'include',
     body: JSON.stringify( user ),
   } )
-    .then( ( response ) => response.json() )
-    .then( ( value: { result: string } ) => value.result )
+    .then( ( response ) =>
+      response.status === 200 ? response.json() : undefined
+    )
+    .then( ( value: { result: boolean } | undefined ) =>
+      value?.result
+    )
 }
 export const logout = async () => {
   return fetch( domain + "/fastify/logout", {
@@ -38,12 +42,16 @@ export const logout = async () => {
     .then( ( value: { result: boolean } ) => value.result )
 }
 export const guide = async () => {
-  return fetch( domain + "/fastify/", {
+  return fetch( domain + "/fastify/guide", {
     method: "GET",
     credentials: 'include',
   } )
-    .then( ( response ) => response.json() )
-    .then( ( value: { user: boolean, guide: boolean, hr: boolean } ) => value )
+    .then( ( response ) =>
+      response.status === 200 ? response.json() : undefined
+    )
+    .then( ( value: { hr: boolean, guide: boolean } | undefined ) =>
+      value ? [ true, value.hr, value.guide ] : [ false, false, true ]
+    )
 }
 export const existMail = async ( email: string ) => {
   return fetch( domain + "/fastify/email-check?email=" + email, { method: "GET" } )
@@ -53,7 +61,7 @@ export const existMail = async ( email: string ) => {
 export const validMail = async ( email: string ) => {
   return fetch( domain + "/fastify/email-validate?email=" + email, { method: "GET" } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: string | null } ) => value.result )
+    .then( ( value: { result: string } ) => value.result )
 }
 export const resetMail = async ( email: string ) => {
   return fetch( domain + "/fastify/email-reset", {
@@ -78,7 +86,7 @@ export const resetPassword = async ( oldPassword: string, newPassword: string ) 
 export const validPhone = async ( phone: string ) => {
   return fetch( domain + "/fastify/phone-validate?phone=" + phone, { method: "GET" } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: string | null } ) => value.result )
+    .then( ( value: { result: string } ) => value.result )
 }
 export const areas: area[] = await fetch( domain + "/fastify/JSON/areas.json" )
   .then( ( response ) => response.json() )
@@ -87,7 +95,7 @@ export const cities: city[] = await fetch( domain + "/fastify/JSON/cities.json" 
 export const provinces: province[] = await fetch( domain + "/fastify/JSON/provinces.json" )
   .then( ( response ) => response.json() )
 export const uploadImage = async ( formData: FormData ) => {
-  return fetch( domain + "/fastify/image-upload", {
+  return fetch( domain + "/fastify/image", {
     method: "POST",
     credentials: 'include',
     body: formData,
@@ -96,17 +104,13 @@ export const uploadImage = async ( formData: FormData ) => {
     .then( ( value: { result: string } ) => value.result )
 }
 export const resetAvatar = async ( formData: FormData, fileName: string | undefined ) => {
-  if ( fileName ) {
-    return fetch( domain + "/fastify/avatar-reset?fileName=" + fileName, {
-      method: "PATCH",
-      credentials: 'include',
-      body: formData,
-    } )
-      .then( ( response ) => response.json() )
-      .then( ( value: { result: string } ) => value.result )
-  } else {
-    return ''
-  }
+  return fileName ? fetch( domain + "/fastify/image?fileName=" + fileName, {
+    method: "PATCH",
+    credentials: 'include',
+    body: formData,
+  } )
+    .then( ( response ) => response.json() )
+    .then( ( value: { result: string } ) => value.result ) : ''
 }
 interface info {
   name: string
@@ -125,7 +129,7 @@ export const getUserInfo = async () => {
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: userInfo | undefined } ) => value.result )
+    .then( ( value: { info: userInfo } ) => value.info )
 }
 export const postUserInfo = async ( userInfo: Omit<userInfo, "cv" | "valid"> ) => {
   return fetch( domain + "/fastify/userinfo", {
@@ -155,7 +159,7 @@ export const getHRInfo = async () => {
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: hrInfo | undefined } ) => value.result )
+    .then( ( value: { info: hrInfo } ) => value.info )
 }
 export const postHRInfo = async ( hrInfo: hrInfo ) => {
   return fetch( domain + "/fastify/hrinfo", {
@@ -185,8 +189,8 @@ export const getCorpInfo = async ( logo?: string ) => {
   } )
     .then( ( response ) => response.json() )
     .then( ( value: {
-      result: Omit<corpInfo, "corpID" | "chiefHR"> & { valid?: boolean },
-      addition?: Pick<hrInfo, "name" | "hrID">[]
+      info: Omit<corpInfo, "corpID" | "chiefHR"> & { valid?: boolean },
+      list?: Pick<hrInfo, "name" | "hrID">[]
     } ) => value )
 }
 export const postCorpInfo = async ( corpInfo: corpInfo ) => {
@@ -224,16 +228,16 @@ export const getJobList = async (
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: jobItem[] } ) => {
-      value.result.forEach( ( item ) => {
+    .then( ( value: { list: jobItem[] } ) => {
+      for ( const item of value.list ) {
         if ( item.type === "full-time" ) {
           item.salary += "千元/月"
         }
         if ( item.type === "part-time" ) {
           item.salary += "元/小时"
         }
-      } )
-      return value.result
+      }
+      return value.list
     } )
 }
 export const finishJob = async ( jobInfo: jobInfo ) => {
@@ -268,7 +272,7 @@ export const deleteJob = async ( no: number, corpid: string ) => {
     .then( ( value: { result: boolean } ) => value.result )
 }
 export const patchInfo = async ( target: "userinfo" | "hrinfo", phone?: string, location?: string ) => {
-  const src = `${ domain }/fastify/${ target }`
+  const source = `${ domain }/fastify/${ target }`
   const body = Object.create( null )
   if ( target === "userinfo" ) {
     body.phone = phone
@@ -276,7 +280,7 @@ export const patchInfo = async ( target: "userinfo" | "hrinfo", phone?: string, 
   } else if ( target === "hrinfo" ) {
     body.phone = phone
   }
-  return fetch( src, {
+  return fetch( source, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     credentials: 'include',
@@ -288,18 +292,14 @@ export const patchInfo = async ( target: "userinfo" | "hrinfo", phone?: string, 
 export const uploadCV = async ( file: File ) => {
   const formData = new FormData()
   formData.append( "cv", file )
-  return fetch( domain + "/fastify/cv-upload", {
+  return fetch( domain + "/fastify/cv", {
     method: "POST",
     credentials: 'include',
     body: formData
   } )
     .then( ( response ) => response.json() )
     .then( ( value: { result: boolean, cv?: string } ) => {
-      if ( value.result ) {
-        return value.cv as string
-      } else {
-        return ""
-      }
+      return value.result ? value.cv as string : ""
     } )
 }
 export const deliverCV = async ( no: number ) => {
@@ -320,7 +320,7 @@ export const receiveCV = async ( no: number ) => {
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: cvItem[] } ) => value.result )
+    .then( ( value: { list: cvItem[] } ) => value.list )
 }
 export const removeCV = async ( action: string, no: number, cv: string, corpname: string, datetime?: string, location?: string ) => {
   let body = ""
@@ -354,7 +354,7 @@ export const getInfoBox = async ( offset: number ) => {
     credentials: 'include',
   } )
     .then( ( response ) => response.json() )
-    .then( ( value: { result: infoItem[] } ) => value.result )
+    .then( ( value: { list: infoItem[] } ) => value.list )
 }
 export const changeInfoBox = async ( no: number, action: string ) => {
   return fetch( `${ domain }/fastify/infobox/${ action }?no=${ no.toString() }`, {

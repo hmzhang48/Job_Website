@@ -1,9 +1,8 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-//import { S } from "fluent-json-schema"
-import { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
-import { JSONSchema } from "json-schema-to-ts"
-import crypto from "crypto"
+import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
+import type { JSONSchema } from "json-schema-to-ts"
+import crypto from "node:crypto"
 import random from "crypto-random-string"
 import { eq, desc, and, not, like, arrayContains, inArray, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
@@ -19,78 +18,123 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       output: Date
     } ]
   }>>()
-  server.get( '/',
+  server.get( "/email-check",
     {
       schema: {
+        querystring: {
+          type: 'object',
+          properties: {
+            email: {
+              type: "string",
+              format: "email"
+            }
+          },
+          required: [ "email" ],
+          additionalProperties: false
+        } as const satisfies JSONSchema,
         response: {
           200: {
             type: 'object',
-            properties: {
-              user: { type: "boolean" },
-              guide: { type: "boolean" },
-              hr: { type: "boolean" }
-            },
-            required: [ "user" ],
+            properties: { result: { type: "boolean" } },
+            required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { user: result } )
         }
       }
     },
     async ( request, reply ) => {
-      const user = request.user
-      if ( user.hr ) {
-        const info = await server.drizzle.query.hrInfo.findFirst( {
-          columns: {},
-          where: eq( hrInfo.uuid, user.uuid )
-        } ).catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
-        } )
-        if ( info ) {
-          reply.send( {
-            user: true,
-            guide: false,
-            hr: true
-          } )
-        } else {
-          reply.send( {
-            user: true,
-            guide: true,
-            hr: true
-          } )
-        }
-      } else {
-        const info = await server.drizzle.query.userInfo.findFirst( {
-          columns: {},
-          where: eq( userInfo.uuid, user.uuid )
-        } ).catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
-        } )
-        if ( info ) {
-          reply.send( {
-            user: true,
-            guide: false,
-            hr: false
-          } )
-        } else {
-          reply.send( {
-            user: true,
-            guide: true,
-            hr: false
-          } )
-        }
-      }
+      const user = await server.drizzle.query.users.findFirst( {
+        columns: {},
+        where: eq( users.email, request.query.email )
+      } ).catch( ( error ) => {
+        server.log.error( error )
+      } )
+      reply.send( { result: user ? true : false } )
     }
   )
-  server.post(
-    "/",
+  server.get( "/email-validate",
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          properties: {
+            email: {
+              type: "string",
+              format: "email"
+            }
+          },
+          required: [ "email" ],
+          additionalProperties: false
+        } as const satisfies JSONSchema,
+        response: {
+          200: {
+            type: 'object',
+            properties: { result: { type: "string" } },
+            required: [ "result" ],
+            additionalProperties: false
+          } as const satisfies JSONSchema
+        }
+      }
+    },
+    async ( request, reply ) => {
+      const address = request.query.email
+      const code = random( { length: 10 } )
+      const message = {
+        from: "Haomin Zhang <zhanghaomin@ethereal.email>",
+        to: address,
+        subject: "验证码",
+        html: "<p>" + code + "</p>",
+      }
+      let result: boolean
+      result = await server.mail.verify()
+        .then( () => true )
+        .catch( ( error ) => {
+          server.log.error( error )
+          return false
+        } )
+      if ( result && server.mail.isIdle() ) {
+        result = await server.mail.sendMail( message )
+          .then( () => true )
+          .catch( ( error ) => {
+            server.log.error( error )
+            return false
+          } )
+      }
+      reply.send( { result: result ? code : "" } )
+    }
+  )
+  server.get( "/phone-validate",
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          properties: {
+            phone: {
+              type: "string",
+              pattern: "^\\d{11}$"
+            }
+          },
+          required: [ "phone" ],
+          additionalProperties: false
+        } as const satisfies JSONSchema,
+        response: {
+          200: {
+            type: 'object',
+            properties: { result: { type: "string" } },
+            required: [ "result" ],
+            additionalProperties: false
+          } as const satisfies JSONSchema
+        }
+      }
+    },
+    async ( request, reply ) => {
+      const phone = request.query.phone
+      server.log.info( phone )
+      const code = random( { length: 10 } )
+      reply.send( { result: code } )
+    }
+  )
+  server.post( "/register",
     {
       schema: {
         body: {
@@ -113,9 +157,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
@@ -123,29 +165,27 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      const body = request.body
       const uuid = crypto.randomUUID()
-      const email = body.email
       const hash = crypto.createHash( "md5" )
-      hash.update( body.password )
+      hash.update( request.body.password )
       const password = hash.digest( "hex" )
-      const hr = body.hr
       const source: typeof users.$inferInsert = Object.create( null )
       source.uuid = uuid
-      source.email = email
+      source.email = request.body.email
       source.password = password
-      source.hr = hr
+      source.hr = request.body.hr
       const result = await server.drizzle.insert( users ).values( source )
         .then( () => true )
-        .catch( ( reason ) => {
-          server.log.error( reason )
+        .catch( ( error ) => {
+          server.log.error( error )
           return false
         } )
       if ( result ) {
-        const token = await reply.jwtSign( {
-          uuid: uuid,
-          hr: hr
-        } )
+        const token = await reply.jwtSign(
+          JSON.stringify( {
+            uuid: uuid,
+            hr: request.body.hr
+          } ) )
         reply.setCookie(
           "jwt", token, {
           path: "/",
@@ -153,162 +193,11 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           sameSite: true,
           signed: true
         } )
-          .send( {
-            result: result,
-          } )
-      } else {
-        reply.send( {
-          result: result
-        } )
       }
+      reply.send( { result: result } )
     }
   )
-  server.get(
-    "/email-check",
-    {
-      schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            email: {
-              type: "string",
-              format: "email"
-            }
-          },
-          required: [ "email" ],
-          additionalProperties: false
-        } as const satisfies JSONSchema,
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
-            required: [ "result" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
-    },
-    async ( request, reply ) => {
-      const user = await server.drizzle.query.users.findFirst( {
-        columns: {},
-        where: eq( users.email, request.query.email )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
-      } )
-      if ( user ) {
-        reply.send( { result: true } )
-      } else {
-        reply.send( { result: false } )
-      }
-    }
-  )
-  server.get(
-    "/email-validate",
-    {
-      schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            email: {
-              type: "string",
-              format: "email"
-            }
-          },
-          required: [ "email" ],
-          additionalProperties: false
-        } as const satisfies JSONSchema,
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              result: {
-                anyOf: [
-                  { type: "string" },
-                  { type: "null" }
-                ]
-              }
-            },
-            required: [ "result" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
-    },
-    async ( request, reply ) => {
-      const address = request.query.email
-      const code = random( { length: 10 } )
-      const message = {
-        from: "Haomin Zhang <zhanghaomin@ethereal.email>",
-        to: address,
-        subject: "验证码",
-        html: "<p>" + code + "</p>",
-      }
-      let result: boolean
-      result = await server.mail.verify()
-        .then( () => true )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return false
-        } )
-      if ( result && server.mail.isIdle() ) {
-        result = await server.mail.sendMail( message )
-          .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return false
-          } )
-      }
-      if ( result ) {
-        reply.send( { result: code } )
-      } else {
-        reply.send( { result: null } )
-      }
-    }
-  )
-  server.get(
-    "/phone-validate",
-    {
-      schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            phone: {
-              type: "string",
-              pattern: "^\\d{11}$"
-            }
-          },
-          required: [ "phone" ],
-          additionalProperties: false
-        } as const satisfies JSONSchema,
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              result: {
-                anyOf: [
-                  { type: "string" },
-                  { type: "null" }
-                ]
-              }
-            },
-            required: [ "result" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
-    },
-    async ( request, reply ) => {
-      const phone = request.query.phone
-      server.log.info( phone )
-      const code = random( { length: 10 } )
-      reply.send( { result: code } )
-    }
-  )
-  server.patch(
-    "/email-reset",
+  server.patch( "/email-reset",
     {
       schema: {
         body: {
@@ -325,18 +214,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -345,15 +226,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const result = await server.drizzle.update( users )
         .set( { email: request.body.email } ).where( eq( users.uuid, request.user.uuid ) )
         .then( () => true )
-        .catch( ( reason ) => {
-          server.log.error( reason )
+        .catch( ( error ) => {
+          server.log.error( error )
           return false
         } )
       reply.send( { result: result } )
     }
   )
-  server.patch(
-    "/password-reset",
+  server.patch( "/password-reset",
     {
       schema: {
         body: {
@@ -376,20 +256,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "string" }
-            },
+            properties: { result: { enum: [ "修改成功", "请重试", "密码错误" ] } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( {
-            result: "请重新登陆"
-          } )
         }
       }
     },
@@ -397,9 +267,8 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const user = await server.drizzle.query.users.findFirst( {
         columns: { password: true },
         where: eq( users.uuid, request.user.uuid )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
       if ( user ) {
         const hash = crypto.createHash( "md5" )
@@ -411,33 +280,24 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           const result = await server.drizzle.update( users )
             .set( { password: password } ).where( eq( users.uuid, request.user.uuid ) )
             .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
+            .catch( ( error ) => {
+              server.log.error( error )
               return false
             } )
           if ( result ) {
-            reply.send( {
-              result: "修改成功"
-            } )
+            reply.send( { result: "修改成功" } )
           } else {
-            reply.send( {
-              result: "请重试"
-            } )
+            reply.send( { result: "请重试" } )
           }
         } else {
-          reply.send( {
-            result: "密码错误"
-          } )
+          reply.send( { result: "密码错误" } )
         }
       } else {
-        reply.send( {
-          result: "用户不存在"
-        } )
+        reply.code( 403 ).send()
       }
     }
   )
-  server.post(
-    "/login",
+  server.post( "/login",
     {
       schema: {
         body: {
@@ -460,9 +320,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           200: {
             type: 'object',
             properties: {
-              result: { enum: [ "success", "email", "password" ] }
+              result: { type: "boolean" },
+              hr: { type: "boolean" }
             },
-            required: [],
+            required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
@@ -472,53 +333,47 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const user = await server.drizzle.query.users.findFirst( {
         columns: { email: false },
         where: eq( users.email, request.body.email )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
       if ( user ) {
         const hash = crypto.createHash( "md5" )
         hash.update( request.body.password )
         const password = hash.digest( "hex" )
         if ( password === user.password ) {
-          const token = await reply.jwtSign( {
-            uuid: user.uuid,
-            hr: user.hr
-          } )
+          const token = await reply.jwtSign(
+            JSON.stringify( {
+              uuid: user.uuid,
+              hr: user.hr
+            } ) )
           reply.setCookie(
             "jwt", token, {
             path: "/",
             httpOnly: true,
             sameSite: true,
             signed: true
-          } ).send( { result: "success" } )
+          } ).send( {
+            result: true,
+            hr: user.hr
+          } )
         } else {
-          reply.send( { result: "password" } )
+          reply.send( { result: false } )
         }
       } else {
-        reply.send( { result: "email" } )
+        reply.code( 304 ).send()
       }
     }
   )
-  server.get(
-    "/logout",
+  server.get( "/logout",
     {
       schema: {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -527,54 +382,79 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         .send( { result: true } )
     }
   )
-  server.get(
-    "/userinfo",
+  server.get( '/guide',
     {
       schema: {
         response: {
           200: {
             type: 'object',
             properties: {
-              result: {
-                anyOf: [
-                  {
-                    type: 'object',
-                    properties: {
-                      name: { type: "string" },
-                      id: {
-                        type: "string",
-                        pattern: "^\\d{17}[0-9Xx]$"
-                      },
-                      location: {
-                        type: "string",
-                        pattern: "^\\d{6}$"
-                      },
-                      phone: {
-                        type: "string",
-                        pattern: "^\\d{11}$"
-                      },
-                      avatar: { type: "string" },
-                      cv: { type: "string" },
-                      valid: { type: "boolean" }
-                    },
-                    required: [
-                      "name", "id", "location", "phone", "avatar", "cv", "valid"
-                    ],
-                    additionalProperties: false
-                  },
-                  { type: "null" }
-                ]
-              }
+              user: { type: "boolean" },
+              hr: { type: "boolean" },
+              guide: { type: "boolean" }
             },
-            required: [ "result" ],
+            required: [ "hr", "guide" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: null } )
+      }
+    },
+    async ( request, reply ) => {
+      const info = await ( (
+        request.user.hr ?
+          server.drizzle.query.hrInfo.findFirst( {
+            columns: {},
+            where: eq( hrInfo.uuid, request.user.uuid )
+          } ) :
+          server.drizzle.query.userInfo.findFirst( {
+            columns: {},
+            where: eq( userInfo.uuid, request.user.uuid )
+          } )
+      ).catch( ( error ) => {
+        server.log.error( error )
+      } ) )
+      reply.send( {
+        hr: request.user.hr,
+        guide: info ? true : false
+      } )
+    }
+  )
+  server.get( "/userinfo",
+    {
+      schema: {
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              info: {
+                type: 'object',
+                properties: {
+                  name: { type: "string" },
+                  id: {
+                    type: "string",
+                    pattern: "^\\d{17}[0-9Xx]$"
+                  },
+                  location: {
+                    type: "string",
+                    pattern: "^\\d{6}$"
+                  },
+                  phone: {
+                    type: "string",
+                    pattern: "^\\d{11}$"
+                  },
+                  avatar: { type: "string" },
+                  cv: { type: "string" },
+                  valid: { type: "boolean" }
+                },
+                required: [
+                  "name", "id", "location", "phone", "avatar", "cv", "valid"
+                ],
+                additionalProperties: false
+              }
+            },
+            required: [ "info" ],
+            additionalProperties: false
+          } as const satisfies JSONSchema
         }
       }
     },
@@ -582,19 +462,17 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const info = await server.drizzle.query.userInfo.findFirst( {
         columns: { uuid: false },
         where: eq( userInfo.uuid, request.user.uuid )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
       if ( info ) {
-        reply.send( { result: info } )
+        reply.send( { info: info } )
       } else {
-        reply.send( { result: null } )
+        reply.code( 404 ).send()
       }
     }
   )
-  server.post(
-    "/userinfo",
+  server.post( "/userinfo",
     {
       schema: {
         body: {
@@ -621,25 +499,16 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
-        }
       }
     },
     async ( request, reply ) => {
-      const user = request.user
       const source: typeof userInfo.$inferInsert = Object.create( null )
-      source.uuid = user.uuid
+      source.uuid = request.user.uuid
       source.name = request.body.name
       source.id = request.body.id
       source.location = request.body.location
@@ -647,15 +516,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       source.avatar = request.body.avatar
       const result = await server.drizzle.insert( userInfo ).values( source )
         .then( () => true )
-        .catch( ( reason ) => {
-          server.log.error( reason )
+        .catch( ( error ) => {
+          server.log.error( error )
           return false
         } )
       reply.send( { result: result } )
     },
   )
-  server.patch(
-    "/userinfo",
+  server.patch( "/userinfo",
     {
       schema: {
         body: {
@@ -675,18 +543,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -698,22 +558,21 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       if ( request.body.phone ) {
         source.phone = request.body.phone
       }
-      if ( Object.keys( source ).length ) {
+      if ( Object.keys( source ).length > 0 ) {
         const result = await server.drizzle.update( userInfo )
           .set( source ).where( eq( userInfo.uuid, request.user.uuid ) )
           .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
+          .catch( ( error ) => {
+            server.log.error( error )
             return false
           } )
         reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 401 ).send()
       }
     }
   )
-  server.get(
-    "/corp-check",
+  server.get( "/corp-check",
     {
       schema: {
         querystring: {
@@ -730,18 +589,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -749,60 +600,43 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const info = await server.drizzle.query.corpInfo.findFirst( {
         columns: {},
         where: eq( corpInfo.corpID, request.query.corpid )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
-      if ( info ) {
-        reply.send( { result: true } )
-      } else {
-        reply.send( { result: false } )
-      }
+      reply.send( { result: info ? true : false } )
     }
   )
-  server.get(
-    "/hrinfo",
+  server.get( "/hrinfo",
     {
       schema: {
         response: {
           200: {
             type: 'object',
             properties: {
-              result: {
-                anyOf: [
-                  {
-                    type: 'object',
-                    properties: {
-                      name: { type: "string" },
-                      hrID: { type: "string" },
-                      corpID: {
-                        type: "string",
-                        pattern: regexp
-                      },
-                      phone: {
-                        type: "string",
-                        pattern: "^\\d{11}$"
-                      },
-                      avatar: { type: "string" }
-                    },
-                    required: [
-                      "name", "hrID", "corpID", "phone", "avatar"
-                    ],
-                    additionalProperties: false
+              info: {
+                type: 'object',
+                properties: {
+                  name: { type: "string" },
+                  hrID: { type: "string" },
+                  corpID: {
+                    type: "string",
+                    pattern: regexp
                   },
-                  { type: "null" }
-                ]
+                  phone: {
+                    type: "string",
+                    pattern: "^\\d{11}$"
+                  },
+                  avatar: { type: "string" }
+                },
+                required: [
+                  "name", "hrID", "corpID", "phone", "avatar"
+                ],
+                additionalProperties: false
               }
             },
-            required: [ "result" ],
+            required: [ "info" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: null } )
         }
       }
     },
@@ -810,19 +644,17 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const info = await server.drizzle.query.hrInfo.findFirst( {
         columns: { uuid: false },
         where: eq( hrInfo.uuid, request.user.uuid )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
       if ( info ) {
-        reply.send( { result: info } )
+        reply.send( { info: info } )
       } else {
-        reply.send( { result: null } )
+        reply.code( 404 ).send()
       }
     }
   )
-  server.post(
-    "/hrinfo",
+  server.post( "/hrinfo",
     {
       schema: {
         body: {
@@ -846,18 +678,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -865,9 +689,8 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const info = await server.drizzle.query.corpInfo.findFirst( {
         columns: {},
         where: eq( corpInfo.corpID, request.body.corpID )
-      } ).catch( ( reason ) => {
-        server.log.error( reason )
-        return undefined
+      } ).catch( ( error ) => {
+        server.log.error( error )
       } )
       if ( info ) {
         const source: typeof hrInfo.$inferInsert = Object.create( null )
@@ -879,18 +702,17 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         source.avatar = request.body.avatar
         const result = await server.drizzle.insert( hrInfo ).values( source )
           .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
+          .catch( ( error ) => {
+            server.log.error( error )
             return false
           } )
         reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 403 ).send()
       }
     }
   )
-  server.patch(
-    "/hrinfo",
+  server.patch( "/hrinfo",
     {
       schema: {
         body: {
@@ -906,38 +728,29 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
     async ( request, reply ) => {
       if ( request.body.phone ) {
-        const result = await server.drizzle.update( userInfo )
-          .set( { phone: request.body.phone } ).where( eq( userInfo.uuid, request.user.uuid ) )
+        const result = await server.drizzle.update( hrInfo )
+          .set( { phone: request.body.phone } ).where( eq( hrInfo.uuid, request.user.uuid ) )
           .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
+          .catch( ( error ) => {
+            server.log.error( error )
             return false
           } )
         reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 401 ).send()
       }
     }
   )
-  server.get(
-    "/corpinfo",
+  server.get( "/corpinfo",
     {
       schema: {
         querystring: {
@@ -951,45 +764,34 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           200: {
             type: 'object',
             properties: {
-              result: {
-                anyOf: [
-                  {
-                    type: 'object',
-                    properties: {
-                      corpName: { type: "string" },
-                      brief: { type: "string" },
-                      logo: { type: "string" },
-                      chiefhr: { type: "string" },
-                      valid: { type: "boolean" }
-                    },
-                    required: [ "corpName", "brief", "logo" ],
-                    additionalProperties: false
-                  },
-                  { type: "null" }
-                ]
-              },
-              addition: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    hrID: { type: "string" }
-                  },
-                  required: [ "name", "hrID" ],
-                  additionalProperties: false
-                }
+              info: {
+                type: 'object',
+                properties: {
+                  corpName: { type: "string" },
+                  brief: { type: "string" },
+                  logo: { type: "string" },
+                  chiefhr: { type: "string" },
+                  valid: { type: "boolean" },
+                  hrist: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        hrID: { type: "string" }
+                      },
+                      required: [ "name", "hrID" ],
+                      additionalProperties: false
+                    }
+                  }
+                },
+                required: [ "corpName", "brief", "logo" ],
+                additionalProperties: false
               }
             },
-            required: [ "result" ],
+            required: [ "info" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: null } )
         }
       }
     },
@@ -1002,14 +804,13 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             logo: true
           },
           where: eq( corpInfo.logo, request.query.logo )
-        } ).catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        } ).catch( ( error ) => {
+          server.log.error( error )
         } )
         if ( info ) {
-          reply.send( { result: info } )
+          reply.send( { info: info } )
         } else {
-          reply.send( { result: null } )
+          reply.code( 404 ).send()
         }
       } else {
         const hr_info = await server.drizzle.query.hrInfo.findFirst( {
@@ -1018,49 +819,45 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
             corpID: true
           },
           where: eq( hrInfo.uuid, request.user.uuid )
-        } ).catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        } ).catch( ( error ) => {
+          server.log.error( error )
         } )
         if ( hr_info ) {
           const corp_info = await server.drizzle.query.corpInfo.findFirst( {
             columns: { corpID: false },
-            where: eq( corpInfo.corpID, hr_info.corpID )
-          } ).catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
-          } )
-          if ( corp_info ) {
-            if ( corp_info.chiefHR === hr_info.hrID ) {
-              const hrList = await server.drizzle.query.hrInfo.findMany( {
+            with: {
+              hrList: {
                 columns: {
                   name: true,
                   hrID: true
-                },
-                where: eq( hrInfo.corpID, hr_info.corpID )
-              } )
-                .then( ( result ) =>
-                  result.filter( ( r ) => r.hrID !== hr_info.hrID )
-                )
-                .catch( ( reason ) => {
-                  server.log.error( reason )
-                  return []
-                } )
-              reply.send( {
-                result: corp_info,
-                addition: hrList
-              } )
+                }
+              }
+            },
+            where: eq( corpInfo.corpID, hr_info.corpID )
+          } )
+            .catch( ( error ) => {
+              server.log.error( error )
+            } )
+          if ( corp_info ) {
+            if ( corp_info.chiefHR === hr_info.hrID ) {
+              corp_info.hrList.filter(
+                ( info ) =>
+                  info.hrID !== hr_info.hrID
+              )
+            } else {
+              corp_info.hrList = []
             }
-            reply.send( { result: corp_info } )
+            reply.send( { info: corp_info } )
           } else {
-            reply.send( { result: null } )
+            reply.code( 404 ).send()
           }
+        } else {
+          reply.code( 403 ).send()
         }
       }
     }
   )
-  server.post(
-    "/corpinfo",
+  server.post( "/corpinfo",
     {
       schema: {
         body: {
@@ -1081,18 +878,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -1105,24 +894,21 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       source.logo = request.body.logo
       const result = await server.drizzle.insert( corpInfo ).values( source )
         .then( () => true )
-        .catch( ( reason ) => {
-          server.log.error( reason )
+        .catch( ( error ) => {
+          server.log.error( error )
           return false
         } )
       reply.send( { result: result } )
     }
   )
-  server.get(
-    "/jobinfo",
+  server.get( "/jobinfo",
     {
       schema: {
         querystring: {
           type: 'object',
           properties: {
             position: { type: "string" },
-            type: {
-              enum: [ "part-time", "full-time" ]
-            },
+            type: { enum: [ "part-time", "full-time" ] },
             salary: {
               type: "string",
               pattern: "^\\d+$"
@@ -1141,16 +927,14 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           200: {
             type: 'object',
             properties: {
-              result: {
+              list: {
                 type: "array",
                 items: {
                   type: 'object',
                   properties: {
                     position: { type: "string" },
                     overview: { type: "string" },
-                    type: {
-                      enum: [ "part-time", "full-time" ]
-                    },
+                    type: { enum: [ "part-time", "full-time" ] },
                     salary: {
                       type: "string",
                       pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
@@ -1159,9 +943,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                       type: "string",
                       pattern: "^\\d{6}$"
                     },
-                    no: {
-                      type: "number",
-                    },
+                    no: { type: "number" },
                     corpInfo: {
                       type: 'object',
                       properties: {
@@ -1179,116 +961,104 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                 }
               }
             },
-            required: [ "result" ],
+            required: [ "list" ],
             additionalProperties: false
           } as const satisfies JSONSchema,
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: [] } )
         }
       }
     },
     async ( request, reply ) => {
       const options: SQL[] = []
       if ( request.user.hr ) {
-        const info = await server.drizzle.query.hrInfo.findFirst( {
+        const hr_info = await server.drizzle.query.hrInfo.findFirst( {
           columns: { corpID: true },
           where: eq( hrInfo.uuid, request.user.uuid )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
           } )
-        if ( !info ) {
-          reply.send( { result: [] } )
-          return
+        if ( hr_info ) {
+          options.push( eq( jobInfo.corpID, hr_info.corpID ) )
         }
-        options.push( eq( jobInfo.corpID, info.corpID ) )
       } else {
-        const info = await server.drizzle.query.userInfo.findFirst( {
+        const user_info = await server.drizzle.query.userInfo.findFirst( {
           columns: {
             location: true,
             cv: true
           },
           where: eq( userInfo.uuid, request.user.uuid )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
           } )
-        if ( !info ) {
-          reply.send( { result: [] } )
-          return
-        }
-        if ( info.cv ) {
-          options.push( not( arrayContains( jobInfo.cvList, [ info.cv ] ) ) )
-        }
-        if ( request.query.position ) {
-          options.push( like( jobInfo.position, `%${ request.query.position }%` ) )
-        }
-        if ( request.query.type ) {
-          options.push( eq( jobInfo.type, request.query.type ) )
-        }
-        if ( request.query.salary ) {
-          options.push( sql`jobinfo.salary @> ${ parseInt( request.query.salary ) }` )
-        }
-        if ( request.query.location ) {
-          let location = request.query.location
-          if ( location === "0000" ) {
-            location = info.location.slice( 0, 4 )
+        if ( user_info ) {
+          options.push( not( arrayContains( jobInfo.cvList, [ user_info.cv ] ) ) )
+          if ( request.query.position ) {
+            options.push( like( jobInfo.position, `%${ request.query.position }%` ) )
           }
-          options.push( sql`starts_with( jobinfo.location, ${ location } )` )
-        }
-        if ( request.query.logo ) {
-          const info = await server.drizzle.query.corpInfo.findFirst( {
-            columns: { corpID: true },
-            where: eq( corpInfo.logo, request.query.logo )
-          } )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return undefined
+          if ( request.query.type ) {
+            options.push( eq( jobInfo.type, request.query.type ) )
+          }
+          if ( request.query.salary ) {
+            options.push( sql`jobinfo.salary @> ${ Number.parseInt( request.query.salary ) }` )
+          }
+          if ( request.query.location ) {
+            let location = request.query.location
+            if ( location === "0000" ) {
+              location = user_info.location.slice( 0, 4 )
+            }
+            options.push( sql`starts_with( jobinfo.location, ${ location } )` )
+          }
+          if ( request.query.logo ) {
+            const corp_info = await server.drizzle.query.corpInfo.findFirst( {
+              columns: { corpID: true },
+              where: eq( corpInfo.logo, request.query.logo )
             } )
-          if ( info ) {
-            options.push( eq( jobInfo.corpID, info.corpID ) )
+              .catch( ( error ) => {
+                server.log.error( error )
+              } )
+            if ( corp_info ) {
+              options.push( eq( jobInfo.corpID, corp_info.corpID ) )
+            }
           }
         }
       }
-      const jobList = await server.drizzle.query.jobInfo.findMany( {
-        columns: {
-          corpID: false,
-          cvList: false
-        },
-        with: {
-          corpInfo: {
-            columns: {
-              corpName: true,
-              logo: true
+      if ( options.length > 0 ) {
+        const jobList = await server.drizzle.query.jobInfo.findMany( {
+          columns: {
+            corpID: false,
+            cvList: false
+          },
+          with: {
+            corpInfo: {
+              columns: {
+                corpName: true,
+                logo: true
+              }
             }
-          }
-        },
-        where: and( ...options ),
-        orderBy: desc( jobInfo.no ),
-        limit: 2,
-        offset: request.query.offset,
-      } )
-        .then( ( list ) =>
-          list.map( ( l ) => {
-            l.salary = l.salary.slice( 1, l.salary.length - 1 ).replace( ",", "~" )
-            return l
-          } )
-        )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return []
+          },
+          where: and( ...options ),
+          orderBy: desc( jobInfo.no ),
+          limit: 2,
+          offset: request.query.offset,
         } )
-      reply.send( { result: jobList } )
+          .then( ( list ) =>
+            list.map( ( l ) => {
+              l.salary = l.salary.slice( 1, - 1 ).replace( ",", "~" )
+              return l
+            } )
+          )
+          .catch( ( error ) => {
+            server.log.error( error )
+            return []
+          } )
+        reply.send( { list: jobList } )
+      } else {
+        reply.code( 304 ).send()
+      }
     }
   )
-  server.post(
-    "/jobinfo",
+  server.post( "/jobinfo",
     {
       schema: {
         body: {
@@ -1296,9 +1066,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           properties: {
             position: { type: "string" },
             overview: { type: "string" },
-            type: {
-              enum: [ "part-time", "full-time" ]
-            },
+            type: { enum: [ "part-time", "full-time" ] },
             salary: {
               type: "string",
               pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
@@ -1316,52 +1084,42 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
-        }
       }
     },
     async ( request, reply ) => {
-      const source: typeof jobInfo.$inferInsert = Object.create( null )
-      source.position = request.body.position
-      source.overview = request.body.overview
-      source.type = request.body.type
-      source.salary = request.body.salary
-      source.location = request.body.location
       const info = await server.drizzle.query.hrInfo.findFirst( {
         columns: { corpID: true },
         where: eq( hrInfo.uuid, request.user.uuid )
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        .catch( ( error ) => {
+          server.log.error( error )
         } )
       if ( info ) {
+        const source: typeof jobInfo.$inferInsert = Object.create( null )
+        source.position = request.body.position
+        source.overview = request.body.overview
+        source.type = request.body.type
+        source.salary = request.body.salary
+        source.location = request.body.location
         source.corpID = info.corpID
         const result = await server.drizzle.insert( jobInfo ).values( source )
           .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
+          .catch( ( error ) => {
+            server.log.error( error )
             return false
           } )
         reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 304 ).send()
       }
     }
   )
-  server.patch(
-    "/jobinfo",
+  server.patch( "/jobinfo",
     {
       schema: {
         body: {
@@ -1369,9 +1127,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           properties: {
             position: { type: "string" },
             overview: { type: "string" },
-            type: {
-              enum: [ "part-time", "full-time" ]
-            },
+            type: { enum: [ "part-time", "full-time" ] },
             salary: {
               type: "string",
               pattern: "^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$"
@@ -1392,62 +1148,56 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
-        }
       }
     },
     async ( request, reply ) => {
-      const source: Partial<Omit<typeof jobInfo.$inferInsert, "corpID" | "cvList" | "no">> = Object.create( null )
-      if ( request.body.position ) {
-        source.position = request.body.position
-      }
-      if ( request.body.overview ) {
-        source.overview = request.body.overview
-      }
-      if ( request.body.type ) {
-        source.type = request.body.type
-      }
-      if ( request.body.salary ) {
-        source.salary = request.body.salary
-      }
-      if ( request.body.location ) {
-        source.location = request.body.location
-      }
       const info = await server.drizzle.query.hrInfo.findFirst( {
         columns: { corpID: true },
         where: eq( hrInfo.uuid, request.user.uuid )
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        .catch( ( error ) => {
+          server.log.error( error )
         } )
       if ( info?.corpID === request.body.corpID ) {
-        const result = await server.drizzle.update( jobInfo )
-          .set( source ).where( eq( jobInfo.no, request.body.no ) )
-          .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return false
-          } )
-        reply.send( { result: result } )
+        const source: Partial<Omit<typeof jobInfo.$inferInsert, "corpID" | "cvList" | "no">> = Object.create( null )
+        if ( request.body.position ) {
+          source.position = request.body.position
+        }
+        if ( request.body.overview ) {
+          source.overview = request.body.overview
+        }
+        if ( request.body.type ) {
+          source.type = request.body.type
+        }
+        if ( request.body.salary ) {
+          source.salary = request.body.salary
+        }
+        if ( request.body.location ) {
+          source.location = request.body.location
+        }
+        if ( Object.keys( source ).length > 0 ) {
+          const result = await server.drizzle.update( jobInfo )
+            .set( source ).where( eq( jobInfo.no, request.body.no ) )
+            .then( () => true )
+            .catch( ( error ) => {
+              server.log.error( error )
+              return false
+            } )
+          reply.send( { result: result } )
+        } else {
+          reply.code( 401 ).send()
+        }
       } else {
-        reply.send( { result: false } )
+        reply.code( 403 ).send()
       }
     }
   )
-  server.delete(
-    "/jobinfo",
+  server.delete( "/jobinfo",
     {
       schema: {
         body: {
@@ -1465,18 +1215,10 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
@@ -1485,43 +1227,34 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         columns: { corpID: true },
         where: eq( hrInfo.uuid, request.user.uuid )
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        .catch( ( error ) => {
+          server.log.error( error )
+          return
         } )
       if ( info?.corpID === request.body.corpID ) {
         const result = await server.drizzle.delete( jobInfo )
           .where( eq( jobInfo.no, request.body.no ) )
           .then( () => true )
-          .catch( ( reason ) => {
-            server.log.error( reason )
+          .catch( ( error ) => {
+            server.log.error( error )
             return false
           } )
         reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 403 ).send()
       }
     }
   )
-  server.post(
-    "/image-upload",
+  server.post( "/image",
     {
       schema: {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "string" }
-            },
+            properties: { result: { type: "string" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: "" } )
         }
       }
     },
@@ -1530,43 +1263,28 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       if ( file ) {
         const fileName = random( { length: 10 } )
         const result = await server.saveFile( file, fileName )
-        if ( result ) {
-          reply.send( { result: fileName } )
-        } else {
-          reply.send( { result: "" } )
-        }
+        reply.send( { result: result ? fileName : "" } )
       } else {
-        reply.send( { result: "" } )
+        reply.code( 401 ).send()
       }
     }
   )
-  server.patch(
-    "/avatar-reset",
+  server.patch( "/image",
     {
       schema: {
         querystring: {
           type: 'object',
-          properties: {
-            fileName: { type: "string" }
-          },
+          properties: { fileName: { type: "string" } },
           required: [ "fileName" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "string" }
-            },
+            properties: { result: { type: "string" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: "" } )
         }
       }
     },
@@ -1574,166 +1292,138 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       const file = await request.file()
       if ( file ) {
         const fileName = random( { length: 10 } )
-        const result = await server.saveFile( file, fileName )
+        let result = await server.saveFile( file, fileName )
         if ( result ) {
-          let query
-          if ( request.user.hr ) {
-            query = server.drizzle.update( hrInfo )
-              .set( { avatar: fileName } ).where( eq( hrInfo.uuid, request.user.uuid ) )
-          } else {
-            query = server.drizzle.update( userInfo )
-              .set( { avatar: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) )
-          }
-          const result = await query
+          result = await ( request.user.hr ?
+            server.drizzle.update( hrInfo )
+              .set( { avatar: fileName } ).where( eq( hrInfo.uuid, request.user.uuid ) ) :
+            server.drizzle.update( userInfo )
+              .set( { avatar: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) ) )
             .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
+            .catch( ( error ) => {
+              server.log.error( error )
               return false
             } )
-          if ( result ) {
-            await server.deleteFile( "image", request.query.fileName )
-            reply.send( { result: fileName } )
-          } else {
-            reply.send( { result: "" } )
-          }
-        } else {
-          reply.send( { result: "" } )
+          await ( result ?
+            server.deleteFile( "image", request.query.fileName ) :
+            server.deleteFile( "image", fileName )
+          )
         }
+        reply.send( { result: result ? fileName : "" } )
       } else {
-        reply.send( { result: "" } )
+        reply.code( 401 ).send()
       }
     }
   )
-  server.post(
-    "/cv-upload",
+  server.post( "/cv",
     {
       schema: {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" },
-              cv: { type: "string" }
-            },
+            properties: { result: { type: "string" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
         }
       }
     },
     async ( request, reply ) => {
       const file = await request.file()
       if ( file ) {
-        const fileName = random( { length: 10 } )
-        const result = await server.saveFile( file, fileName )
-        if ( result ) {
-          const info = await server.drizzle.query.userInfo.findFirst( {
-            columns: { cv: true },
-            where: eq( userInfo.uuid, request.user.uuid )
+        const info = await server.drizzle.query.userInfo.findFirst( {
+          columns: { cv: true },
+          where: eq( userInfo.uuid, request.user.uuid )
+        } )
+          .catch( ( error ) => {
+            server.log.error( error )
           } )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return undefined
-            } )
-          if ( info?.cv ) {
-            await server.deleteFile( "PDF", info.cv + ".pdf" )
+        if ( info ) {
+          const fileName = random( { length: 10 } )
+          let result = await server.saveFile( file, fileName )
+          if ( result ) {
+            result = await server.drizzle.update( userInfo )
+              .set( { cv: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) )
+              .then( () => true )
+              .catch( ( error ) => {
+                server.log.error( error )
+                return false
+              } )
+            await ( result ?
+              server.deleteFile( "PDF", info.cv + ".pdf" ) :
+              server.deleteFile( "PDF", fileName + ".pdf" )
+            )
           }
-          const result = await server.drizzle.update( userInfo )
-            .set( { cv: fileName } ).where( eq( userInfo.uuid, request.user.uuid ) )
-            .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return false
-            } )
-          reply.send( { result: result, cv: fileName } )
+          reply.send( { result: result ? fileName : "" } )
         } else {
-          reply.send( { result: false } )
+          reply.code( 403 ).send()
         }
       } else {
-        reply.send( { result: false } )
+        reply.code( 401 ).send()
       }
     }
   )
-  server.get(
-    "/cv-deliver",
+  server.get( "/cv-deliver",
     {
       schema: {
         querystring: {
           type: 'object',
-          properties: {
-            no: { type: "number" }
-          },
+          properties: { no: { type: "number" } },
           required: [ "no" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
-        }
       }
     },
     async ( request, reply ) => {
-      const info = await server.drizzle.query.userInfo.findFirst( {
+      const user_info = await server.drizzle.query.userInfo.findFirst( {
         columns: { cv: true },
         where: eq( userInfo.uuid, request.user.uuid )
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        .catch( ( error ) => {
+          server.log.error( error )
         } )
-      if ( info?.cv ) {
+      if ( user_info ) {
         const job_info = await server.drizzle.query.jobInfo.findFirst( {
-          columns: { no: true },
           where: and(
             eq( jobInfo.no, request.query.no ),
-            arrayContains( jobInfo.cvList, [ info.cv ] )
+            arrayContains( jobInfo.cvList, [ user_info.cv ] )
           )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
           } )
-        if ( !job_info ) {
+        if ( job_info ) {
+          reply.code( 401 ).send()
+        } else {
           const result = await server.drizzle.update( jobInfo )
-            .set( { cvList: sql`array_append( jobinfo.cvlist, ${ info.cv } )` } )
+            .set( { cvList: sql`array_append( jobinfo.cvlist, ${ user_info.cv } )` } )
             .where( eq( jobInfo.no, request.query.no ) )
             .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
+            .catch( ( error ) => {
+              server.log.error( error )
               return false
             } )
           reply.send( { result: result } )
         }
+      } else {
+        reply.code( 403 ).send()
       }
     }
   )
-  server.get(
-    "/cv-receive",
+  server.get( "/cv-receive",
     {
       schema: {
         querystring: {
           type: 'object',
-          properties: {
-            no: { type: "number" }
-          },
+          properties: { no: { type: "number" } },
           required: [ "no" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
@@ -1741,7 +1431,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           200: {
             type: 'object',
             properties: {
-              result: {
+              list: {
                 type: "array",
                 items: {
                   type: "object",
@@ -1754,15 +1444,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                 }
               }
             },
-            required: [ "result" ],
+            required: [ "list" ],
             additionalProperties: false
           } as const satisfies JSONSchema,
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: [] } )
         }
       }
     },
@@ -1771,9 +1455,8 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         columns: { corpID: true },
         where: eq( hrInfo.uuid, request.user.uuid )
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
-          return undefined
+        .catch( ( error ) => {
+          server.log.error( error )
         } )
       if ( hr_info ) {
         const job_info = await server.drizzle.query.jobInfo.findFirst( {
@@ -1783,40 +1466,36 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           },
           where: eq( jobInfo.no, request.query.no )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
           } )
         if ( hr_info.corpID === job_info?.corpID ) {
-          const user_info = await server.drizzle.query.userInfo.findMany( {
+          const userList = await server.drizzle.query.userInfo.findMany( {
             columns: {
               name: true,
               cv: true
             },
             where: inArray( userInfo.cv, job_info.cvList )
           } )
-            .catch( ( reason ) => {
-              server.log.error( reason )
+            .catch( ( error ) => {
+              server.log.error( error )
               return []
             } )
-          reply.send( { result: user_info } )
+          reply.send( { list: userList } )
         } else {
-          reply.send( { result: [] } )
+          reply.code( 401 ).send()
         }
       } else {
-        reply.send( { result: [] } )
+        reply.code( 403 ).send()
       }
-    },
+    }
   )
-  server.post(
-    "/cv-remove/:state",
+  server.post( "/cv-remove/:state",
     {
       schema: {
         params: {
           type: 'object',
-          properties: {
-            state: { enum: [ "welcome", "refuse" ] }
-          },
+          properties: { state: { enum: [ "welcome", "refuse" ] } },
           required: [ "state" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
@@ -1841,24 +1520,22 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
-        }
       }
     },
     async ( request, reply ) => {
-      if ( request.user.hr ) {
-        let result = false
+      const hr_info = await server.drizzle.query.hrInfo.findFirst( {
+        columns: { corpID: true },
+        where: eq( hrInfo.uuid, request.user.uuid )
+      } )
+        .catch( ( error ) => {
+          server.log.error( error )
+        } )
+      if ( hr_info ) {
         const user_info = await server.drizzle.query.userInfo.findFirst( {
           columns: {
             name: true,
@@ -1866,9 +1543,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           },
           where: eq( userInfo.cv, request.body.cv )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
+            return
           } )
         const job_info = await server.drizzle.query.jobInfo.findFirst( {
           columns: {
@@ -1877,64 +1554,66 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           },
           where: eq( jobInfo.no, request.body.no )
         } )
-          .catch( ( reason ) => {
-            server.log.error( reason )
-            return undefined
+          .catch( ( error ) => {
+            server.log.error( error )
+            return
           } )
-        if ( user_info && job_info ) {
-          const source: { uuid: string, info: string } = Object.create( null )
-          source.uuid = user_info.uuid
-          if (
-            request.params.state === "welcome" &&
-            request.body.datetime &&
-            request.body.location
-          ) {
-            const datetime = request.body.datetime.split( "-" )
-            datetime[ 0 ] += "年"
-            datetime[ 1 ] += "月"
-            datetime[ 2 ] += "日"
-            const time = datetime.join( "" )
-            source.info = `
-              尊敬的${ user_info.name }先生, 很高兴的通知您, 您申请的${ request.body.corpname }公司的${ job_info.position }职位已通过简历筛选, 现邀请您参加面试.
-              请您于${ time }携带简历到${ request.body.location }参加面试.
+        if ( user_info && job_info && hr_info.corpID === job_info.corpID ) {
+          let info = ""
+          switch ( request.params.state ) {
+            case "welcome": {
+              if ( request.body.datetime && request.body.location ) {
+                const datetime = request.body.datetime.split( "-" )
+                datetime[ 0 ] += "年"
+                datetime[ 1 ] += "月"
+                datetime[ 2 ] += "日"
+                const time = datetime.join( "" )
+                info = `
+                尊敬的${ user_info.name }先生, 很高兴的通知您:
+                您申请的${ request.body.corpname }公司的${ job_info.position }职位已通过简历筛选, 现邀请您参加面试.
+                请您于${ time }携带简历到${ request.body.location }参加面试.
+                `
+              }
+              break
+            }
+            case "refuse": {
+              info = `
+              尊敬的${ user_info.name }先生, 很抱歉的通知您:
+              您申请的${ request.body.corpname }公司的${ job_info.position }职位未通过简历筛选, 请选择其他合适的职位.
               `
-          } else if ( request.params.state === "refuse" ) {
-            source.info = `
-              尊敬的${ user_info.name }先生, 很抱歉的通知您, 您申请的${ request.body.corpname }公司的${ job_info.position }职位未通过简历筛选, 请选择其他合适的职位.
-              `
+              break
+            }
           }
-          result = await server.drizzle.insert( infoBox ).values( source )
-            .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return false
-            } )
+          if ( info ) {
+            const result = await Promise.all( [
+              server.drizzle.insert( infoBox )
+                .values( { uuid: user_info.uuid, info: info } ),
+              server.drizzle.update( jobInfo )
+                .set( { cvList: sql`array_remove( jobinfo.cvlist, ${ request.body.cv } )` } )
+                .where( eq( jobInfo.no, request.body.no ) )
+            ] ).then( () => true )
+              .catch( ( error ) => {
+                server.log.error( error )
+                return false
+              } )
+            reply.send( { result: result } )
+          } else {
+            reply.code( 401 ).send()
+          }
+        } else {
+          reply.code( 401 ).send()
         }
-        if ( result ) {
-          result = await server.drizzle.update( jobInfo )
-            .set( { cvList: sql`array_remove( jobinfo.cvlist, ${ request.body.cv } )` } )
-            .where( eq( jobInfo.no, request.body.no ) )
-            .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return false
-            } )
-        }
-        reply.send( { result: result } )
       } else {
-        reply.send( { result: false } )
+        reply.code( 403 ).send()
       }
     }
   )
-  server.get(
-    "/infobox",
+  server.get( "/infobox",
     {
       schema: {
         querystring: {
           type: 'object',
-          properties: {
-            offset: { type: "number" }
-          },
+          properties: { offset: { type: "number" } },
           required: [ "offset" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
@@ -1942,7 +1621,7 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
           200: {
             type: 'object',
             properties: {
-              result: {
+              list: {
                 type: "array",
                 items: {
                   type: "object",
@@ -1963,15 +1642,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
                 }
               }
             },
-            required: [ "result" ],
+            required: [ "list" ],
             additionalProperties: false
           } as const satisfies JSONSchema
-        }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: [] } )
         }
       }
     },
@@ -1983,82 +1656,111 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
         limit: 2,
         offset: request.query.offset
       } )
-        .catch( ( reason ) => {
-          server.log.error( reason )
+        .catch( ( error ) => {
+          server.log.error( error )
           return []
         } )
-
-      reply.send( {
-        result: list
-      } )
+      reply.send( { list: list } )
     }
   )
-  server.get(
-    "/infobox/:action",
+  server.get( "/infobox/:action",
     {
       schema: {
         params: {
           type: 'object',
-          properties: {
-            action: { enum: [ "read", "remove" ] }
-          },
+          properties: { action: { enum: [ "read", "remove" ] } },
           required: [ "action" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         querystring: {
           type: 'object',
-          properties: {
-            no: { type: "number" }
-          },
+          properties: { no: { type: "number" } },
           required: [ "no" ],
           additionalProperties: false
         } as const satisfies JSONSchema,
         response: {
           200: {
             type: 'object',
-            properties: {
-              result: { type: "boolean" }
-            },
+            properties: { result: { type: "boolean" } },
             required: [ "result" ],
             additionalProperties: false
           } as const satisfies JSONSchema
         }
-      },
-      preValidation: async ( request, reply ) => {
-        const result = await server.authJWT( request )
-        if ( !result ) {
-          reply.send( { result: result } )
+      }
+    },
+    async ( request, reply ) => {
+      const options = and(
+        eq( infoBox.uuid, request.user.uuid ),
+        eq( infoBox.no, request.query.no )
+      )
+      let result = false
+      switch ( request.params.action ) {
+        case "read": {
+          result = await server.drizzle.update( infoBox )
+            .set( { read: true } ).where( options )
+            .then( () => true )
+            .catch( ( error ) => {
+              server.log.error( error )
+              return false
+            } )
+          break
+        }
+        case "remove": {
+          result = await server.drizzle.delete( infoBox )
+            .where( options )
+            .then( () => true )
+            .catch( ( error ) => {
+              server.log.error( error )
+              return false
+            } )
+          break
+        }
+      }
+      reply.send( { result: result } )
+    }
+  )
+  server.get( "/infobox/:event",
+    {
+      schema: {
+        params: {
+          type: 'object',
+          properties: { event: { enum: [ "update" ] } },
+          required: [ "event" ],
+          additionalProperties: false
+        } as const satisfies JSONSchema,
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              event: { type: "string" }
+            },
+            required: [ "event" ],
+            additionalProperties: false
+          } as const satisfies JSONSchema
         }
       }
     },
     async ( request, reply ) => {
-      if ( !request.user.hr ) {
-        let result = false
-        const options = and(
-          eq( infoBox.uuid, request.user.uuid ),
-          eq( infoBox.no, request.query.no )
-        )
-        if ( request.params.action === "read" ) {
-          result = await server.drizzle.update( infoBox )
-            .set( { read: true } ).where( options )
-            .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return false
-            } )
+      if ( request.params.event === "update" ) {
+        const list = await server.drizzle.query.infoBox.findMany( {
+          columns: { uuid: false },
+          where: eq( infoBox.uuid, request.user.uuid ),
+          orderBy: [ desc( infoBox.no ) ],
+          limit: 1,
+          offset: 1
+        } )
+          .catch( ( error ) => {
+            server.log.error( error )
+            return []
+          } )
+        if ( list.length === 1 ) {
+          let payload = `event:${ request.params.event }\n`
+          payload += `data:${ JSON.stringify( list[ 0 ] ) }\n`
+          payload += `retry:3000\n`
+          payload += `\n`
+          reply.headers( { "Content-Type": "text/event-stream; charset=utf-8" } )
+          reply.send( { event: payload } )
         }
-        if ( request.params.action === "remove" ) {
-          result = await server.drizzle.delete( infoBox )
-            .where( options )
-            .then( () => true )
-            .catch( ( reason ) => {
-              server.log.error( reason )
-              return false
-            } )
-        }
-        reply.send( { result: result } )
-      } else {
-        reply.send( { result: false } )
       }
     }
   )

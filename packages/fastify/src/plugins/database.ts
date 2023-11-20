@@ -11,8 +11,7 @@ declare module "fastify" {
 }
 const drizzlePlugin: FastifyPluginAsync = fp( async ( f ) => {
   const client = postgres( "postgres://postgre:postgre@localhost:5432/postgre" )
-  const database = drizzle( client, { schema } )
-  f.decorate( "drizzle", database )
+  f.decorate( "drizzle", drizzle( client, { schema } ) )
   f.addHook( "onClose", () => {
     client.end()
   } )

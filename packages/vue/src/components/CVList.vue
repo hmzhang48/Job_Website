@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import type { cvItem } from "../lib/connect"
-const props = defineProps<{
-  cvList: cvItem[]
-}>()
-const emits = defineEmits<{
-  reviewCV: [ cv: string ]
-}>()
+  import type { cvItem } from "../lib/connect"
+  const props = defineProps<{
+    cvList: cvItem[]
+  }>()
+  const emits = defineEmits<{
+    reviewCV: [cv: string]
+  }>()
 </script>
 
 <template>
   <article>
     <h1>待处理简历</h1>
-    <div v-if=" cvList.length ">
-      <ul v-for=" cv  of  props.cvList " :key=" cv.cv ">
+    <div v-if="cvList.length > 0">
+      <ul
+        v-for="cv in props.cvList"
+        :key="cv.cv">
         <li>
-          <a @click.prevent="emits( 'reviewCV', cv.cv )">{{ cv.name }}</a>
+          <a @click.prevent="emits('reviewCV', cv.cv)">{{ cv.name }}</a>
         </li>
       </ul>
     </div>
@@ -23,9 +25,9 @@ const emits = defineEmits<{
 </template>
 
 <style scoped>
-article {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
+  article {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 </style>

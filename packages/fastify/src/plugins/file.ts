@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import type { MultipartFile } from "@fastify/multipart"
-import fs from "fs/promises"
-import stream from "stream/promises"
+import fs from "node:fs/promises"
+import stream from "node:stream/promises"
 declare module "fastify" {
   interface FastifyInstance {
     saveFile: ( file: MultipartFile, fileName: string ) => Promise<boolean>
@@ -25,17 +25,19 @@ const filePlugin: FastifyPluginAsync = fp( async ( f ) => {
       .then( () => {
         return true
       } )
-      .catch( ( reason ) => {
-        f.log.error( reason )
+      .catch( ( error ) => {
+        f.log.error( error )
         return false
       } )
       .finally( async () => await handle.close() )
   } )
   f.decorate( 'deleteFile', async ( fileType: string, fileName: string ) => {
-    return fs.rm( "./public/" + fileType + "/" + fileName )
-      .catch( ( reason ) => {
-        f.log.error( reason )
-      } )
+    if ( !fileName.startsWith( "." ) ) {
+      return fs.rm( "./public/" + fileType + "/" + fileName )
+        .catch( ( error ) => {
+          f.log.error( error )
+        } )
+    }
   } )
 } )
 export default filePlugin
