@@ -1,13 +1,16 @@
 <script setup lang="ts">
   import HRInfo from "./HRInfo.vue"
   import CorpInfo from "./CorpInfo.vue"
-  import { ref } from "vue"
+  import { ref, watch } from "vue"
+  import { storeToRefs } from "pinia"
   import { useModalStore } from "../stores/modalStore.js"
   const modalStore = useModalStore()
-  modalStore.$subscribe((_, state) => {
-    if (!state.modalState && state.confirmState) {
-      show.value = !state.confirmState
-      state.confirmState = false
+  const { modalState, confirmState } = storeToRefs(modalStore)
+  const { showModel } = modalStore
+  watch(modalState, () => {
+    if (confirmState.value) {
+      show.value = false
+      confirmState.value = false
     }
   })
   const emits = defineEmits<{
@@ -20,7 +23,7 @@
   const corpInfo = (hr_id: string, corp_id: string) => {
     hrID.value = hr_id
     corpID.value = corp_id
-    modalStore.showModel("该公司不在数据库中, 请先完善相关数据", true)
+    showModel("该公司不在数据库中, 请先完善相关数据", true)
   }
   const hrInfo = () => {
     exist.value = true

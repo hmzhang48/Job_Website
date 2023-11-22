@@ -1,14 +1,16 @@
 <script setup lang="ts">
-  import { ref, inject } from "vue"
+  import { ref, watch, inject } from "vue"
+  import { storeToRefs } from "pinia"
   import { useUserStore } from "../stores/userStore.js"
   import { useModalStore } from "../stores/modalStore.js"
   import { validMail, existMail, resetMail, logout } from "../lib/connect.js"
   import { resetKey } from "../lib/help.js"
   const userStore = useUserStore()
   const modalStore = useModalStore()
-  const reset = inject(resetKey, () => {
-    return
-  })
+  const { userState } = storeToRefs(userStore)
+  const { modalState } = storeToRefs(modalStore)
+  const { showModel } = modalStore
+  const reset = inject(resetKey, () => {})
   const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let email = ref("")
@@ -74,18 +76,18 @@
     if (checkCode()) {
       let result = await resetMail(email.value)
       if (result) {
-        modalStore.showModel("邮箱地址修改成功,请重新登陆")
-        modalStore.$subscribe(async (_, state) => {
-          if (!state.modalState) {
+        showModel("邮箱地址修改成功,请重新登陆")
+        watch(modalState, async () => {
+          if (!modalState.value) {
             const result = await logout()
             if (result) {
-              userStore.userState = false
+              userState.value = false
               reset()
             }
           }
         })
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     }
   }

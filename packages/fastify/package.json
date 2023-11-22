@@ -1,7 +1,9 @@
 {
-  "name": "fastify",
+  "name": "server",
   "version": "0.0.0",
-  "description": "powered by fastify",
+  "description": "built on Fastify",
+  "author": "hmzhang48",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "compile": "tsc",
@@ -19,7 +21,7 @@
     "@fastify/cors": "^8.4.1",
     "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^11.1.1",
-    "@fastify/jwt": "^7.2.3",
+    "@fastify/jwt": "^7.2.4",
     "@fastify/mongodb": "^8.0.0",
     "@fastify/multipart": "^7.7.3",
     "@fastify/postgres": "^5.2.2",
@@ -49,7 +51,7 @@
   "devDependencies": {
     "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.10.9",
-    "@types/ws": "^8.5.9",
+    "@types/ws": "^8.5.10",
     "drizzle-kit": "^0.20.4",
     "pino-pretty": "^10.2.3"
   },

@@ -5,6 +5,7 @@
   import type { jobItem, jobInfo } from "../lib/connect.js"
   import { initProvince, initCity, initArea } from "../lib/help.js"
   const modalStore = useModalStore()
+  const { showModel } = modalStore
   const props = defineProps<{
     no: number | undefined
     job: jobItem | undefined
@@ -172,7 +173,7 @@
           if (result) {
             emits("patchJob", jobInfo)
           } else {
-            modalStore.showModel("请重试")
+            showModel("请重试")
           }
         } else {
           emits("patchJob")
@@ -187,7 +188,7 @@
         if (result) {
           emits("finishJob")
         } else {
-          modalStore.showModel("请重试")
+          showModel("请重试")
         }
       }
     }

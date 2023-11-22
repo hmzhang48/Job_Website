@@ -1,5 +1,6 @@
 <script setup lang="ts">
-  import { watch, computed, ref } from "vue"
+  import { ref, computed, watch } from "vue"
+  import { storeToRefs } from "pinia"
   import { useRouter } from "vue-router"
   import { useUserStore } from "../stores/userStore.js"
   import { useValidStore } from "../stores/validStore.js"
@@ -14,12 +15,16 @@
   const userStore = useUserStore()
   const validStore = useValidStore()
   const modalStore = useModalStore()
-  modalStore.$subscribe((_, state) => {
-    if (state.confirmState && !validStore.cvState) {
+  const { hrState } = storeToRefs(userStore)
+  const { cvState } = storeToRefs(validStore)
+  const { modalState, confirmState } = storeToRefs(modalStore)
+  const { showModel } = modalStore
+  watch(modalState, () => {
+    if (confirmState.value && !cvState.value) {
       router.push({
         path: "/userSetting/cv",
       })
-      state.confirmState = false
+      confirmState.value = false
     }
   })
   let keyword = ref("")
@@ -109,23 +114,23 @@
     jobBox.value = jobBox.value.filter((value) => value.no !== no)
   }
   const sendCV = async (no: number) => {
-    if (validStore.cvState) {
+    if (cvState.value) {
       const result = await deliverCV(no)
       if (result) {
-        modalStore.showModel("简历投递成功")
+        showModel("简历投递成功")
         hideJob(no)
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     } else {
-      modalStore.showModel("请先上传简历", true)
+      showModel("请先上传简历", true)
     }
   }
 </script>
 
 <template>
   <SearchBar
-    :hrState="userStore.hrState"
+    :hrState="hrState"
     @search="getKeyword" />
   <article v-if="corp.show">
     <header>
@@ -140,7 +145,7 @@
       v-for="job in jobBox"
       :key="job.no">
       <JobList
-        :hrState="userStore.hrState"
+        :hrState="hrState"
         :corpname="job.corpInfo.corpName"
         :logo="job.corpInfo.logo"
         :position="job.position"

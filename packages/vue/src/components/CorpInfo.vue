@@ -4,6 +4,7 @@
   import { useCanvas, loadImage } from "../lib/help.js"
   import { useModalStore } from "../stores/modalStore.js"
   const modalStore = useModalStore()
+  const { showModel } = modalStore
   const props = defineProps<{
     hrID: string
     corpID: string
@@ -89,7 +90,7 @@
       if (result) {
         emits("corpInfo")
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     }
   }

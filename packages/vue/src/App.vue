@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { ref, onMounted, provide } from "vue"
+  import { ref, watch, onMounted, provide } from "vue"
   import type { Ref } from "vue"
   import { useRouter, RouterView } from "vue-router"
+  import { storeToRefs } from "pinia"
   import { useUserStore } from "./stores/userStore.js"
   import { useModalStore } from "./stores/modalStore.js"
   import { useValidStore } from "./stores/validStore.js"
@@ -19,17 +20,17 @@
   const userStore = useUserStore()
   const modalStore = useModalStore()
   const validStore = useValidStore()
+  const { userState, hrState, guideState } = storeToRefs(userStore)
+  const { getGuide } = userStore
+  const { message } = storeToRefs(modalStore)
+  const { validState, chiefState, cvState } = storeToRefs(validStore)
   router.beforeEach((to) =>
-    !userStore.userState && to.path !== "/" && to.path !== "/login"
+    !userState.value && to.path !== "/" && to.path !== "/login"
       ? { path: "/" }
       : true,
   )
-  userStore.$subscribe(() => {
-    stateCheck()
-  })
-  onMounted(async () => {
-    userStore.getGuide()
-  })
+  onMounted(async () => getGuide())
+  watch(userState, () => stateCheck())
   const start = (buttonState: number) => {
     if (buttonState) {
       router.push({
@@ -45,9 +46,9 @@
   let corp = ref<Record<string, string>>({})
   let hrList: Ref<{ name: string; hrID: string }[]> = ref([])
   const stateCheck = async () => {
-    if (userStore.userState) {
-      if (userStore.guideState) {
-        if (userStore.hrState) {
+    if (userState.value) {
+      if (guideState.value) {
+        if (hrState.value) {
           router.push({
             path: "/guideHR",
           })
@@ -57,7 +58,7 @@
           })
         }
       } else {
-        if (userStore.hrState) {
+        if (hrState.value) {
           router.push({
             path: "/HRPage",
           })
@@ -71,12 +72,12 @@
           corp.value.corpName = corpInfo.info.corpName
           corp.value.logo = corpInfo.info.logo
           corp.value.brief = corpInfo.info.brief
-          validStore.validState = corpInfo.info.valid ?? false
+          validState.value = corpInfo.info.valid ?? false
           if (corpInfo.list) {
-            validStore.chiefState = true
+            chiefState.value = true
             hrList.value = corpInfo.list
           } else {
-            validStore.chiefState = false
+            chiefState.value = false
           }
         } else {
           router.push({
@@ -89,10 +90,10 @@
           info.value.phone = userInfo.phone
           info.value.location = userInfo.location
           if (userInfo.cv) {
-            validStore.cvState = true
+            cvState.value = true
             info.value.cv = userInfo.cv
           }
-          validStore.validState = userInfo.valid
+          validState.value = userInfo.valid
         }
       }
     } else {
@@ -122,14 +123,14 @@
       {{ info.name }}
     </TitleNav>
     <Teleport to="body">
-      <InfoModal>{{ modalStore.message }}</InfoModal>
+      <InfoModal>{{ message }}</InfoModal>
     </Teleport>
     <Suspense timeout="10">
       <template #default>
         <RouterView
-          @login="() => userStore.getGuide()"
-          @register="() => userStore.getGuide()"
-          @guide="() => (userStore.guideState = false)" />
+          @login="() => getGuide()"
+          @register="() => getGuide()"
+          @guide="() => (guideState = false)" />
       </template>
       <template #fallback>Loading...</template>
     </Suspense>

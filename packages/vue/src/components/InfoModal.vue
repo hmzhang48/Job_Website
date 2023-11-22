@@ -1,10 +1,13 @@
 <script setup lang="ts">
-  import { ref } from "vue"
+  import { ref, watch } from "vue"
+  import { storeToRefs } from "pinia"
   import { useModalStore } from "../stores/modalStore.js"
   const modalStore = useModalStore()
+  const { modalState, confirmState, message, footerState } =
+    storeToRefs(modalStore)
   let open = ref(false)
-  modalStore.$subscribe((_, state) => {
-    if (state.modalState) {
+  watch(modalState, () => {
+    if (modalState.value) {
       const html = document.documentElement
       html.classList.add("modal-is-open", "modal-is-opening")
       setTimeout(() => {
@@ -16,17 +19,15 @@
       html.classList.add("modal-is-closing")
       setTimeout(() => {
         html.classList.remove("modal-is-open", "modal-is-closing")
-        state.message = ""
-        state.footerState = false
+        message.value = ""
+        footerState.value = false
         open.value = false
       }, 400)
     }
   })
   const setState = (value: boolean) => {
-    modalStore.$patch((state) => {
-      state.modalState = false
-      state.confirmState = value
-    })
+    modalState.value = false
+    confirmState.value = value
   }
 </script>
 
@@ -48,7 +49,7 @@
       <p>
         <slot></slot>
       </p>
-      <footer v-if="modalStore.footerState">
+      <footer v-if="footerState">
         <a
           href="#confirm"
           role="button"

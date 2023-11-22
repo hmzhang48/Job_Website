@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { onMounted, ref } from "vue"
+  import { storeToRefs } from "pinia"
   import { useUserStore } from "../stores/userStore.js"
   import BaseInfo from "./BaseInfo.vue"
   import CVInfo from "./CVInfo.vue"
@@ -7,6 +8,7 @@
   import ResetEmail from "./ResetEmail.vue"
   import ResetPassword from "./ResetPassword.vue"
   let userStore = useUserStore()
+  const { hrState } = storeToRefs(userStore)
   let props = defineProps<{
     tab: string
   }>()
@@ -27,14 +29,14 @@
         <ul>
           <li @click.prevent="index = 0">基本信息</li>
           <li
-            v-if="!userStore.hrState"
+            v-if="!hrState"
             @click.prevent="index = 1">
             求职简历
           </li>
           <li @click.prevent="index = 2">更改头像</li>
           <li @click.prevent="index = 3">修改电子邮件</li>
           <li @click.prevent="index = 4">修改密码</li>
-          <li v-if="!userStore.hrState">实名认证</li>
+          <li v-if="!hrState">实名认证</li>
         </ul>
       </nav>
     </article>

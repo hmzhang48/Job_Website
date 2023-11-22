@@ -1,39 +1,40 @@
 <script setup lang="ts">
-  import { ref, inject } from "vue"
+  import { ref, watch, inject } from "vue"
+  import { storeToRefs } from "pinia"
   import { useUserStore } from "../stores/userStore.js"
   import { useModalStore } from "../stores/modalStore.js"
   import { resetPassword, logout } from "../lib/connect.js"
   import { resetKey } from "../lib/help.js"
   const userStore = useUserStore()
   const modalStore = useModalStore()
-  const reset = inject(resetKey, () => {
-    return
-  })
+  const { userState } = storeToRefs(userStore)
+  const { modalState } = storeToRefs(modalStore)
+  const { showModel } = modalStore
+  const reset = inject(resetKey, () => {})
   const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let oldPassword = ref("")
   let newPassword = ref("")
-  const check = (password: string) => {
-    return password.length >= 8 && password.length <= 25 ? true : false
-  }
+  const check = (password: string) =>
+    password.length >= 8 && password.length <= 25 ? true : false
   const submit = async () => {
     invalid.value.oldPassword = check(oldPassword.value) ? false : true
     invalid.value.newPassword = check(newPassword.value) ? false : true
     if (!invalid.value.newPassword && !invalid.value.oldPassword) {
-      let r = await resetPassword(oldPassword.value, newPassword.value)
-      if (r === "修改成功") {
-        modalStore.showModel("密码修改成功,请重新登陆")
-        modalStore.$subscribe(async (_, state) => {
-          if (!state.modalState) {
+      const result = await resetPassword(oldPassword.value, newPassword.value)
+      if (result === "修改成功") {
+        showModel("密码修改成功,请重新登陆")
+        watch(modalState, async () => {
+          if (!modalState.value) {
             const result = await logout()
             if (result) {
-              userStore.userState = false
+              userState.value = false
               reset()
             }
           }
         })
       } else {
-        modalStore.showModel(r)
+        showModel(result)
       }
     }
   }

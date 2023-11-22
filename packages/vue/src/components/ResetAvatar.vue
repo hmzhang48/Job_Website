@@ -10,6 +10,7 @@
     updateKey,
   } from "../lib/help.js"
   const modalStore = useModalStore()
+  const { showModel } = modalStore
   let info = inject(infoKey)
   let update = inject(updateKey, () => {
     return
@@ -45,10 +46,10 @@
     formData.append("avatar", avatar)
     const fileName = await resetAvatar(formData, info?.value.avatar)
     if (fileName) {
-      modalStore.showModel("头像上传成功")
+      showModel("头像上传成功")
       update("avatar", fileName)
     } else {
-      modalStore.showModel("请重试")
+      showModel("请重试")
     }
   }
   const checkAvatar = async () => {

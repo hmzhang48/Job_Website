@@ -4,6 +4,7 @@
   import { getInfoBox, changeInfoBox } from "../lib/connect.js"
   import type { infoItem } from "../lib/connect.js"
   const modalStore = useModalStore()
+  const { showModel } = modalStore
   let infoBox = ref<infoItem[]>([])
   const limit = 2
   let offset = 0
@@ -33,7 +34,7 @@
         infoBox.value[index].read = true
       }
     } else {
-      modalStore.showModel("请重试")
+      showModel("请重试")
     }
   }
 </script>

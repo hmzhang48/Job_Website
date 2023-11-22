@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { computed, ref, inject, watch } from "vue"
+  import { storeToRefs } from "pinia"
   import { useUserStore } from "../stores/userStore.js"
   import { useModalStore } from "../stores/modalStore.js"
   import SearchBar from "./SearchBar.vue"
@@ -18,6 +19,8 @@
   } from "../lib/help.js"
   const userStore = useUserStore()
   const modalStore = useModalStore()
+  const { hrState } = storeToRefs(userStore)
+  const { showModel } = modalStore
   let corp = inject(corpKey)
   let keyword = ref("")
   const getKeyword = (k: string) => {
@@ -101,7 +104,7 @@
     if (result) {
       jobBox.value = jobBox.value.filter((value) => value.no !== no)
     } else {
-      modalStore.showModel("请重试")
+      showModel("请重试")
     }
   }
   let cvList = ref<cvItem[]>([])
@@ -112,7 +115,7 @@
       cvList.value = result
       jobNo.value = value
     } else {
-      modalStore.showModel("请重试")
+      showModel("请重试")
     }
   }
   let hrMode = ref(0)
@@ -144,7 +147,7 @@
         hrMode.value = 0
       }
     } else {
-      modalStore.showModel("请重试")
+      showModel("请重试")
     }
   }
 </script>
@@ -152,7 +155,7 @@
 <template>
   <div v-show="!hrMode">
     <SearchBar
-      :hrState="userStore.hrState"
+      :hrState="hrState"
       @search="getKeyword"
       @newJob="newJob = true" />
     <article>
@@ -174,7 +177,7 @@
         v-for="job in jobBox"
         :key="job.no">
         <JobList
-          :hrState="userStore.hrState"
+          :hrState="hrState"
           :corpname="job.corpInfo.corpName"
           :logo="job.corpInfo.logo"
           :position="job.position"

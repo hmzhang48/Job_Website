@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ref, inject, computed } from "vue"
+  import { storeToRefs } from "pinia"
   import { patchInfo, validPhone } from "../lib/connect.js"
   import {
     trueLocation,
@@ -16,6 +17,9 @@
   const userStore = useUserStore()
   const validStore = useValidStore()
   const modalStore = useModalStore()
+  const { hrState } = storeToRefs(userStore)
+  const { validState } = storeToRefs(validStore)
+  const { showModel } = modalStore
   let info = inject(infoKey)
   let corp = inject(corpKey)
   let update = inject(updateKey, () => {})
@@ -52,7 +56,7 @@
         l.value = false
         update("location", area.value)
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     }
   }
@@ -111,14 +115,14 @@
     if (code.value === validCode) {
       invalidPhone.value = false
       let result = await patchInfo(
-        userStore.hrState ? "hrinfo" : "userinfo",
+        hrState.value ? "hrinfo" : "userinfo",
         newPhone.value,
       )
       if (result) {
         p.value = false
         update("phone", newPhone.value)
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     } else {
       invalidPhone.value = true
@@ -140,32 +144,32 @@
         <tr>
           <th scope="row">姓名</th>
           <td>{{ info?.name }}</td>
-          <td v-if="!userStore.hrState">
-            <mark>{{ validStore.validState ? "已认证" : "未认证" }}</mark>
+          <td v-if="!hrState">
+            <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
         <tr>
-          <th scope="row">{{ userStore.hrState ? "员工编号" : "身份证号" }}</th>
+          <th scope="row">{{ hrState ? "员工编号" : "身份证号" }}</th>
           <td>{{ info?.id }}</td>
-          <td v-if="!userStore.hrState">
-            <mark>{{ validStore.validState ? "已认证" : "未认证" }}</mark>
+          <td v-if="!hrState">
+            <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
-        <tr v-if="userStore.hrState">
+        <tr v-if="hrState">
           <th scope="row">公司名称</th>
           <td>{{ corp?.corpName }}</td>
           <td>
-            <mark>{{ validStore.validState ? "已认证" : "未认证" }}</mark>
+            <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
-        <tr v-if="userStore.hrState">
+        <tr v-if="hrState">
           <th scope="row">统一社会信用代码</th>
           <td>{{ corp?.corpID }}</td>
-          <td v-if="userStore.hrState">
-            <mark>{{ validStore.validState ? "已认证" : "未认证" }}</mark>
+          <td v-if="hrState">
+            <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
-        <tr v-if="!userStore.hrState">
+        <tr v-if="!hrState">
           <th scope="row">居住地</th>
           <td>{{ location }}</td>
           <td v-show="l">

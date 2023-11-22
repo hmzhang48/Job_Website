@@ -1,11 +1,14 @@
 <script setup lang="ts">
   import { ref, inject, onMounted, computed } from "vue"
+  import { storeToRefs } from "pinia"
   import { useModalStore } from "../stores/modalStore.js"
   import { useValidStore } from "../stores/validStore.js"
   import { uploadCV } from "../lib/connect.js"
   import { domain, infoKey, updateKey } from "../lib/help.js"
   const modalStore = useModalStore()
   const validStore = useValidStore()
+  const { showModel } = modalStore
+  const { cvState } = storeToRefs(validStore)
   let info = inject(infoKey)
   let update = inject(updateKey, () => {})
   let src = computed(() =>
@@ -39,11 +42,11 @@
     if (newCV.value) {
       const fileName = await uploadCV(newCV.value)
       if (fileName) {
-        modalStore.showModel("简历上传成功")
-        validStore.cvState = true
+        showModel("简历上传成功")
+        cvState.value = true
         update("cv", fileName)
       } else {
-        modalStore.showModel("请重试")
+        showModel("请重试")
       }
     } else {
       wrong.value = true
