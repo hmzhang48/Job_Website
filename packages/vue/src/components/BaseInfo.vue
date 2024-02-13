@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, inject, computed } from "vue"
   import { storeToRefs } from "pinia"
-  import { patchInfo, validPhone } from "../lib/connect.js"
+  import { patchInfo, validPhone } from "../lib/connect.ts"
   import {
     trueLocation,
     initProvince,
@@ -10,10 +10,10 @@
     infoKey,
     corpKey,
     updateKey,
-  } from "../lib/help.js"
-  import { useUserStore } from "../stores/userStore.js"
-  import { useValidStore } from "../stores/validStore.js"
-  import { useModalStore } from "../stores/modalStore.js"
+  } from "../lib/help.ts"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { useValidStore } from "../stores/validStore.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const userStore = useUserStore()
   const validStore = useValidStore()
   const modalStore = useModalStore()
@@ -46,7 +46,9 @@
   }
   let area = ref("area")
   let invalidArea = ref(false)
-  let location = computed(() => (info ? trueLocation(info.value.location) : ""))
+  let location = computed(() =>
+    info ? trueLocation(info.value["location"]) : "",
+  )
   const checkArea = async () => {
     if (area.value === "area") {
       invalidArea.value = true
@@ -143,28 +145,30 @@
       <tbody>
         <tr>
           <th scope="row">姓名</th>
-          <td>{{ info?.name }}</td>
+          <td>{{ info?.["name"] }}</td>
           <td v-if="!hrState">
             <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
         <tr>
-          <th scope="row">{{ hrState ? "员工编号" : "身份证号" }}</th>
-          <td>{{ info?.id }}</td>
+          <th scope="row">
+            {{ hrState ? "员工编号" : "身份证号" }}
+          </th>
+          <td>{{ info?.["id"] }}</td>
           <td v-if="!hrState">
             <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
         <tr v-if="hrState">
           <th scope="row">公司名称</th>
-          <td>{{ corp?.corpName }}</td>
+          <td>{{ corp?.["corpName"] }}</td>
           <td>
             <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
         </tr>
         <tr v-if="hrState">
           <th scope="row">统一社会信用代码</th>
-          <td>{{ corp?.corpID }}</td>
+          <td>{{ corp?.["corpID"] }}</td>
           <td v-if="hrState">
             <mark>{{ validState ? "已认证" : "未认证" }}</mark>
           </td>
@@ -215,21 +219,21 @@
         </tr>
         <tr>
           <th scope="row">手机号码</th>
-          <td>{{ info?.phone }}</td>
+          <td>{{ info?.["phone"] }}</td>
           <td v-show="p">
             <input
               id="phone"
+              v-model.lazy="newPhone"
               type="text"
               placeholder="请输入手机号码"
               required
-              v-model.lazy="newPhone"
               @change="checkPhone" />
             <input
               id="code"
+              v-model.lazy="code"
               type="text"
               placeholder="请输入验证码"
-              required
-              v-model.lazy="code" />
+              required />
             <button
               type="button"
               :aria-busy="loading"
@@ -244,8 +248,8 @@
           <td>
             <span
               role="button"
-              @click.prevent="changePhone"
-              >修改
+              @click.prevent="changePhone">
+              修改
             </span>
           </td>
         </tr>

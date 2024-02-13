@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { ref, watch } from "vue"
-  import { uploadImage, postCorpInfo } from "../lib/connect.js"
-  import { useCanvas, loadImage } from "../lib/help.js"
-  import { useModalStore } from "../stores/modalStore.js"
+  import { uploadImage, postCorpInfo } from "../lib/connect.ts"
+  import { useCanvas, loadImage } from "../lib/help.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
   const props = defineProps<{
@@ -16,7 +16,7 @@
   let invalid = ref<Record<string, boolean>>({})
   let name = ref("")
   const checkName = () => {
-    invalid.value.name = name.value === "" ? true : false
+    invalid.value["name"] = name.value === "" ? true : false
   }
   let origin = await loadImage("./vue.svg")
   let canvas = ref<HTMLCanvasElement>()
@@ -41,18 +41,18 @@
     const file = logoInput.value?.files?.[0]
     if (file && file.size < 102_400) {
       logo.value = file
-      invalid.value.logo = false
+      invalid.value["logo"] = false
     } else {
-      invalid.value.avatar = true
+      invalid.value["avatar"] = true
     }
   }
   let brief = ref("")
   const checkBrief = () => {
     if (brief.value === "") {
-      invalid.value.brief = true
+      invalid.value["brief"] = true
       return false
     } else {
-      invalid.value.brief = false
+      invalid.value["brief"] = false
       return true
     }
   }
@@ -107,9 +107,9 @@
         placeholder="请输入企业全称"
         required
         @change="checkName"
-        :[invalidKey]="invalid.name"
+        :[invalidKey]="invalid['name']"
         v-model.lazy="name" />
-      <p><small v-show="invalid.name">企业全称格式有误</small></p>
+      <p><small v-show="invalid['name']">企业全称格式有误</small></p>
       <label for="logo">企业Logo</label>
       <div class="grid">
         <div>
@@ -119,7 +119,7 @@
             accept="image/*"
             ref="logoInput"
             @change="checkLogo" />
-          <p><small v-show="invalid.logo">头像图片需小于100KB</small></p>
+          <p><small v-show="invalid['logo']">头像图片需小于100KB</small></p>
         </div>
         <canvas
           id="canvas"
@@ -139,10 +139,10 @@
         type="text"
         placeholder="请介绍一下企业的基本情况"
         required
-        :[invalidKey]="invalid.brief"
+        :[invalidKey]="invalid['brief']"
         v-model.lazy="brief"
         @change="checkBrief" />
-      <p><small v-show="invalid.brief">企业介绍格式有误</small></p>
+      <p><small v-show="invalid['brief']">企业介绍格式有误</small></p>
       <button
         type="submit"
         @click.prevent="submit">

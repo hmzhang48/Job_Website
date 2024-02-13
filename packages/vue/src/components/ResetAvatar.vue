@@ -1,14 +1,14 @@
 <script setup lang="ts">
   import { ref, watch, computed, inject } from "vue"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { resetAvatar } from "../lib/connect.js"
+  import { resetAvatar } from "../lib/connect.ts"
   import {
     useCanvas,
     loadImage,
     domain,
     infoKey,
     updateKey,
-  } from "../lib/help.js"
+  } from "../lib/help.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
   let info = inject(infoKey)
@@ -16,8 +16,8 @@
     return
   })
   let src = computed(() => {
-    return info?.value.avatar
-      ? `${domain}/fastify/image/${info.value.avatar}.png`
+    return info?.value["avatar"]
+      ? `${domain}/fastify/image/${info.value["avatar"]}.png`
       : ""
   })
   let origin = await loadImage(src.value)
@@ -44,7 +44,7 @@
     const avatar = await getAvatar()
     const formData = new FormData()
     formData.append("avatar", avatar)
-    const fileName = await resetAvatar(formData, info?.value.avatar)
+    const fileName = await resetAvatar(formData, info?.value["avatar"])
     if (fileName) {
       showModel("头像上传成功")
       update("avatar", fileName)

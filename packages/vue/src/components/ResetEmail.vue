@@ -1,10 +1,10 @@
 <script setup lang="ts">
   import { ref, watch, inject } from "vue"
   import { storeToRefs } from "pinia"
-  import { useUserStore } from "../stores/userStore.js"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { validMail, existMail, resetMail, logout } from "../lib/connect.js"
-  import { resetKey } from "../lib/help.js"
+  import { validMail, existMail, resetMail, logout } from "../lib/connect.ts"
+  import { resetKey } from "../lib/help.ts"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const userStore = useUserStore()
   const modalStore = useModalStore()
   const { userState } = storeToRefs(userStore)
@@ -22,7 +22,7 @@
       return true
     } else {
       tip.value = "电子邮件地址格式不正确"
-      invalid.value.email = true
+      invalid.value["email"] = true
       return false
     }
   }
@@ -33,10 +33,10 @@
       let result = await existMail(email.value)
       if (result) {
         tip.value = "电子邮件地址已被注册"
-        invalid.value.email = true
+        invalid.value["email"] = true
         loading.value = false
       } else {
-        invalid.value.email = false
+        invalid.value["email"] = false
         validCode = await validMail(email.value)
         loading.value = false
         if (validCode) {
@@ -65,10 +65,10 @@
   let code = ref("")
   const checkCode = () => {
     if (code.value === validCode) {
-      invalid.value.code = false
+      invalid.value["code"] = false
       return true
     } else {
-      invalid.value.code = true
+      invalid.value["code"] = true
       return false
     }
   }
@@ -101,10 +101,10 @@
       type="email"
       placeholder="请输入电子邮箱地址"
       required
-      :[invalidKey]="invalid.email"
+      :[invalidKey]="invalid['email']"
       v-model.lazy="email" />
     <p>
-      <small v-show="invalid.email">{{ tip }}</small>
+      <small v-show="invalid['email']">{{ tip }}</small>
     </p>
     <label for="code">验证码</label>
     <div class="grid">
@@ -113,7 +113,7 @@
         type="text"
         placeholder="请输入验证码"
         required
-        :[invalidKey]="invalid.code"
+        :[invalidKey]="invalid['code']"
         v-model.lazy="code" />
       <button
         type="button"
@@ -123,7 +123,7 @@
         {{ buttonContent }}
       </button>
     </div>
-    <p v-show="invalid.code"><small>验证码不正确</small></p>
+    <p v-show="invalid['code']"><small>验证码不正确</small></p>
     <button
       type="submit"
       @click.prevent="submit">

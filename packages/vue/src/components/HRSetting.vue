@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, inject } from "vue"
-  import { hrListKey } from "../lib/help"
+  import { hrListKey } from "../lib/help.ts"
   let hrs = inject(hrListKey)
   let verify = ref(false)
 </script>

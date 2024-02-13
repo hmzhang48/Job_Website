@@ -21,7 +21,7 @@ const filePlugin: FastifyPluginAsync = fp( async ( f ) => {
       path += "PDF/" + fileName + ".pdf"
     }
     const handle = await fs.open( path, "w" )
-    return stream.finished( file.file.pipe( handle.createWriteStream() ) )
+    return stream.pipeline( file.file, handle.createWriteStream() )
       .then( () => {
         return true
       } )

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, watch } from "vue"
   import { storeToRefs } from "pinia"
-  import { useModalStore } from "../stores/modalStore.js"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { modalState, confirmState, message, footerState } =
     storeToRefs(modalStore)

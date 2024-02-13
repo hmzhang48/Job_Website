@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref } from "vue"
-  import { login } from "../lib/connect.js"
+  import { login } from "../lib/connect.ts"
   const emits = defineEmits<{
     login: []
   }>()
@@ -12,11 +12,11 @@
     const emailRegex = new RegExp(/^\w+@\w+\.\w+$/)
     let result = true
     if (!emailRegex.test(email.value)) {
-      invalid.value.email = true
+      invalid.value["email"] = true
       result = false
     }
     if (password.value.length < 8 || password.value.length > 25) {
-      invalid.value.password = true
+      invalid.value["password"] = true
       result = false
     }
     return result
@@ -31,17 +31,17 @@
       const result = await login(user)
       switch (result) {
         case true: {
-          invalid.value.email = true
-          invalid.value.password = true
+          invalid.value["email"] = true
+          invalid.value["password"] = true
           emits("login")
           break
         }
         case false: {
-          invalid.value.password = true
+          invalid.value["password"] = true
           break
         }
         default: {
-          invalid.value.email = true
+          invalid.value["email"] = true
         }
       }
     }
@@ -57,18 +57,18 @@
         type="email"
         placeholder="请输入电子邮箱地址"
         required
-        :[invalidKey]="invalid.email"
+        :[invalidKey]="invalid['email']"
         v-model.lazy="email" />
-      <p v-show="invalid.email"><small>用户不存在</small></p>
+      <p v-show="invalid['email']"><small>用户不存在</small></p>
       <label for="password">密码</label>
       <input
         id="password"
         type="password"
         placeholder="请输入密码"
         required
-        :[invalidKey]="invalid.password"
+        :[invalidKey]="invalid['password']"
         v-model.lazy="password" />
-      <p v-show="invalid.password"><small>密码错误</small></p>
+      <p v-show="invalid['password']"><small>密码错误</small></p>
       <button
         type="submit"
         @click.prevent="submit">

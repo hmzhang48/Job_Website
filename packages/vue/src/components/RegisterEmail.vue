@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, watch } from "vue"
-  import { validMail, existMail, register } from "../lib/connect.js"
+  import { validMail, existMail, register } from "../lib/connect.ts"
   const emits = defineEmits<{
     register: []
   }>()
@@ -23,14 +23,14 @@
       loading.value = false
       if (result) {
         tip.value = "电子邮件地址已被注册,请直接登陆"
-        invalid.value.email = true
+        invalid.value["email"] = true
       } else {
-        invalid.value.email = false
+        invalid.value["email"] = false
         step.value++
       }
     } else {
       tip.value = "电子邮件地址格式不正确"
-      invalid.value.email = true
+      invalid.value["email"] = true
     }
   }
   let validCode: string
@@ -62,19 +62,19 @@
   let code = ref("")
   const checkCode = () => {
     if (code.value === validCode) {
-      invalid.value.code = false
+      invalid.value["code"] = false
       step.value++
     } else {
-      invalid.value.code = true
+      invalid.value["code"] = true
     }
   }
   let password = ref("")
   const checkPassword = async () => {
     if (password.value.length >= 8 && password.value.length <= 25) {
-      invalid.value.password = false
+      invalid.value["password"] = false
       step.value++
     } else {
-      invalid.value.password = true
+      invalid.value["password"] = true
     }
   }
   watch(step, async () => {
@@ -126,10 +126,10 @@
         type="email"
         placeholder="请输入电子邮箱地址"
         required
-        :[invalidKey]="invalid.email"
+        :[invalidKey]="invalid['email']"
         v-model.lazy="email" />
       <p>
-        <small v-show="invalid.email">{{ tip }}</small>
+        <small v-show="invalid['email']">{{ tip }}</small>
       </p>
       <button
         :aria-busy="loading"
@@ -146,7 +146,7 @@
           type="text"
           placeholder="请输入验证码"
           required
-          :[invalidKey]="invalid.code"
+          :[invalidKey]="invalid['code']"
           v-model.lazy="code" />
         <button
           type="button"
@@ -156,7 +156,7 @@
           {{ buttonContent }}
         </button>
       </div>
-      <p v-show="invalid.code">
+      <p v-show="invalid['code']">
         <small>验证码不正确</small>
       </p>
       <button
@@ -172,9 +172,9 @@
         type="password"
         placeholder="请输入密码"
         required
-        :[invalidKey]="invalid.password"
+        :[invalidKey]="invalid['password']"
         v-model.lazy="password" />
-      <p v-show="invalid.password">
+      <p v-show="invalid['password']">
         <small>密码需8位以上</small>
       </p>
       <button

@@ -3,19 +3,19 @@
   import type { Ref } from "vue"
   import { useRouter, RouterView } from "vue-router"
   import { storeToRefs } from "pinia"
-  import { useUserStore } from "./stores/userStore.js"
-  import { useModalStore } from "./stores/modalStore.js"
-  import { useValidStore } from "./stores/validStore.js"
-  import TitleNav from "./components/TitleNav.vue"
-  import InfoModal from "./components/InfoModal.vue"
-  import { getUserInfo, getHRInfo, getCorpInfo } from "./lib/connect.js"
+  import { getUserInfo, getHRInfo, getCorpInfo } from "./lib/connect.ts"
   import {
     infoKey,
     corpKey,
     hrListKey,
     updateKey,
     resetKey,
-  } from "./lib/help.js"
+  } from "./lib/help.ts"
+  import TitleNav from "./components/TitleNav.vue"
+  import InfoModal from "./components/InfoModal.vue"
+  import { useUserStore } from "./stores/userStore.ts"
+  import { useModalStore } from "./stores/modalStore.ts"
+  import { useValidStore } from "./stores/validStore.ts"
   const router = useRouter()
   const userStore = useUserStore()
   const modalStore = useModalStore()
@@ -64,14 +64,14 @@
           })
           const hrInfo = await getHRInfo()
           const corpInfo = await getCorpInfo()
-          info.value.name = hrInfo.name
-          info.value.avatar = hrInfo.avatar
-          info.value.id = hrInfo.hrID
-          info.value.phone = hrInfo.phone
-          corp.value.corpID = hrInfo.corpID
-          corp.value.corpName = corpInfo.info.corpName
-          corp.value.logo = corpInfo.info.logo
-          corp.value.brief = corpInfo.info.brief
+          info.value["name"] = hrInfo.name
+          info.value["avatar"] = hrInfo.avatar
+          info.value["id"] = hrInfo.hrID
+          info.value["phone"] = hrInfo.phone
+          corp.value["corpID"] = hrInfo.corpID
+          corp.value["corpName"] = corpInfo.info.corpName
+          corp.value["logo"] = corpInfo.info.logo
+          corp.value["brief"] = corpInfo.info.brief
           validState.value = corpInfo.info.valid ?? false
           if (corpInfo.list) {
             chiefState.value = true
@@ -84,14 +84,14 @@
             path: "/UserPage",
           })
           const userInfo = await getUserInfo()
-          info.value.name = userInfo.name
-          info.value.avatar = userInfo.avatar
-          info.value.id = userInfo.id
-          info.value.phone = userInfo.phone
-          info.value.location = userInfo.location
+          info.value["name"] = userInfo.name
+          info.value["avatar"] = userInfo.avatar
+          info.value["id"] = userInfo.id
+          info.value["phone"] = userInfo.phone
+          info.value["location"] = userInfo.location
           if (userInfo.cv) {
             cvState.value = true
-            info.value.cv = userInfo.cv
+            info.value["cv"] = userInfo.cv
           }
           validState.value = userInfo.valid
         }
@@ -118,9 +118,9 @@
 <template>
   <div class="container">
     <TitleNav
-      :avatar="info.avatar"
+      :avatar="info['avatar']"
       @start="start">
-      {{ info.name }}
+      {{ info["name"] }}
     </TitleNav>
     <Teleport to="body">
       <InfoModal>{{ message }}</InfoModal>

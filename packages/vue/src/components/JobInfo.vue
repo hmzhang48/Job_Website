@@ -1,9 +1,9 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from "vue"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { finishJob, patchJob } from "../lib/connect.js"
-  import type { jobItem, jobInfo } from "../lib/connect.js"
-  import { initProvince, initCity, initArea } from "../lib/help.js"
+  import { finishJob, patchJob } from "../lib/connect.ts"
+  import { initProvince, initCity, initArea } from "../lib/help.ts"
+  import type { jobItem, jobInfo } from "../lib/connect.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
   const props = defineProps<{
@@ -19,17 +19,17 @@
   let invalid = ref<Record<string, boolean>>({})
   let position = ref("")
   const checkPosition = () => {
-    invalid.value.position = position.value === "" ? true : false
+    invalid.value["position"] = position.value === "" ? true : false
   }
   let overview = ref("")
   const checkOverview = () => {
-    invalid.value.overview = overview.value === "" ? true : false
+    invalid.value["overview"] = overview.value === "" ? true : false
   }
   let type = ref("")
   let salaryType = ref("千元/月")
   const checkType = () => {
     if (type.value === "") {
-      invalid.value.type = true
+      invalid.value["type"] = true
     } else {
       if (type.value === "part-time") {
         salaryType.value = "元/小时"
@@ -37,13 +37,13 @@
       if (type.value === "full-time") {
         salaryType.value = "千元/月"
       }
-      invalid.value.type = false
+      invalid.value["type"] = false
     }
   }
   let minSalary = ref(0)
   let maxSalary = ref(0)
   const checkSalary = () => {
-    invalid.value.salary =
+    invalid.value["salary"] =
       minSalary.value === 0 ||
       maxSalary.value === 0 ||
       minSalary.value > maxSalary.value
@@ -108,7 +108,7 @@
   }
   let location = ref("area")
   const checkLocation = () => {
-    invalid.value.location = location.value === "area" ? true : false
+    invalid.value["location"] = location.value === "area" ? true : false
   }
   const keys = ["position", "overview", "type", "salary", "location"]
   const check = () => {
@@ -203,20 +203,20 @@
       type="text"
       placeholder="职位名称"
       required
-      :[invalidKey]="invalid.position"
+      :[invalidKey]="invalid['position']"
       v-model="position"
       @change="checkPosition" />
-    <p><small v-show="invalid.position">请填写职位名称</small></p>
+    <p><small v-show="invalid['position']">请填写职位名称</small></p>
     <label for="overview">职位介绍</label>
     <textarea
       id="overview"
       rows="3"
       placeholder="职位介绍"
-      :[invalidKey]="invalid.overview"
+      :[invalidKey]="invalid['overview']"
       v-model="overview"
       @change="checkOverview">
     </textarea>
-    <p><small v-show="invalid.overview">请填写职位介绍</small></p>
+    <p><small v-show="invalid['overview']">请填写职位介绍</small></p>
     <fieldset>
       <legend>职位性质</legend>
       <div class="grid">
@@ -226,7 +226,7 @@
             id="full-time"
             type="radio"
             value="full-time"
-            :[invalidKey]="invalid.type"
+            :[invalidKey]="invalid['type']"
             v-model="type"
             @change="checkType" />
           全职
@@ -237,13 +237,13 @@
             id="part-time"
             type="radio"
             value="part-time"
-            :[invalidKey]="invalid.type"
+            :[invalidKey]="invalid['type']"
             v-model="type"
             @change="checkType" />
           兼职
         </label>
       </div>
-      <p><small v-show="invalid.type">请选择职位性质</small></p>
+      <p><small v-show="invalid['type']">请选择职位性质</small></p>
     </fieldset>
     <fieldset>
       <legend>{{ `职位薪资(${salaryType})` }}</legend>
@@ -253,7 +253,7 @@
             id="minSalary"
             type="number"
             placeholder="最低薪资"
-            :[invalidKey]="invalid.salary"
+            :[invalidKey]="invalid['salary']"
             v-model="minSalary"
             @change="checkSalary" />
         </label>
@@ -262,19 +262,19 @@
             id="maxSalary"
             type="number"
             placeholder="最高薪资"
-            :[invalidKey]="invalid.salary"
+            :[invalidKey]="invalid['salary']"
             v-model="maxSalary"
             @change="checkSalary" />
         </label>
       </div>
-      <p><small v-show="invalid.salary">请填写职位薪资</small></p>
+      <p><small v-show="invalid['salary']">请填写职位薪资</small></p>
     </fieldset>
     <fieldset>
       <legend>工作地点</legend>
       <div class="grid">
         <select
           id="province"
-          :[invalidKey]="invalid.location"
+          :[invalidKey]="invalid['location']"
           ref="provinceSelect"
           @change="addCity">
           <option
@@ -285,7 +285,7 @@
         </select>
         <select
           id="city"
-          :[invalidKey]="invalid.location"
+          :[invalidKey]="invalid['location']"
           ref="citySelect"
           @change="addArea">
           <option
@@ -296,7 +296,7 @@
         </select>
         <select
           id="area"
-          :[invalidKey]="invalid.location"
+          :[invalidKey]="invalid['location']"
           ref="areaSelect"
           v-model.lazy="location"
           @change="checkLocation">
@@ -307,7 +307,7 @@
           </option>
         </select>
       </div>
-      <p><small v-show="invalid.location">居住地未选择</small></p>
+      <p><small v-show="invalid['location']">居住地未选择</small></p>
     </fieldset>
     <button @click.prevent="submit">完成</button>
   </article>

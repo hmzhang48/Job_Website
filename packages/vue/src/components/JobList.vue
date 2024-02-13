@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { computed } from "vue"
-  import { domain } from "../lib/help"
+  import { domain } from "../lib/help.ts"
   const props = defineProps<{
     hrState: boolean
     corpname: string

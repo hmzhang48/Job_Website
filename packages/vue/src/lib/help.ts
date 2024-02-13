@@ -1,16 +1,8 @@
-import { provinces, cities, areas } from "./connect.js"
 import { ref, watchEffect, onMounted, onUnmounted } from "vue"
-import type { InjectionKey, Ref } from "vue"
-export interface province {
-  code: string
-  name: string
-}
-export interface city extends province {
-  provinceCode: string
-}
-export interface area extends city {
-  cityCode: string
-}
+import type { Ref, InjectionKey } from "vue"
+import provinces from "../../public/JSON/provinces.json"
+import cities from "../../public/JSON/cities.json"
+import areas from "../../public/JSON/areas.json"
 export const initProvince = ( province?: HTMLSelectElement ) => {
   if ( province ) {
     for ( const value of provinces ) {

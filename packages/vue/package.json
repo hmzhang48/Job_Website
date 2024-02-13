@@ -9,18 +9,16 @@
     "dev": "vite"
   },
   "dependencies": {
-    "@vueuse/core": "^10.6.1",
-    "ky": "^1.1.3",
+    "@vueuse/core": "^10.7.2",
     "pinia": "^2.1.7",
-    "vue": "^3.3.8",
+    "vue": "^3.4.16",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@histoire/plugin-vue": "^0.17.5",
-    "@testing-library/vue": "^8.0.1",
-    "@vitejs/plugin-vue": "^4.5.0",
-    "@vue/test-utils": "^2.4.2",
-    "eslint-plugin-vue": "^9.18.1"
+    "@testing-library/vue": "^8.0.2",
+    "@vitejs/plugin-vue": "^5.0.3",
+    "@vue/test-utils": "^2.4.4",
+    "eslint-plugin-vue": "^9.21.1"
   },
   "eslintConfig": {
     "env": {
@@ -47,28 +45,8 @@
       "plugin:testing-library/vue"
     ],
     "rules": {
-      "unicorn/filename-case": [
-        "error",
-        {
-          "cases": {
-            "camelCase": true,
-            "pascalCase": true
-          },
-          "ignore": [
-            "HR",
-            "CV"
-          ]
-        }
-      ],
-      "unicorn/prevent-abbreviations": [
-        "error",
-        {
-          "allowList": {
-            "props": true,
-            "src": true
-          }
-        }
-      ]
+      "unicorn/filename-case": "off",
+      "unicorn/prevent-abbreviations": "off"
     }
   }
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
   import { ref, inject, onMounted, computed } from "vue"
   import { storeToRefs } from "pinia"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { useValidStore } from "../stores/validStore.js"
-  import { uploadCV } from "../lib/connect.js"
-  import { domain, infoKey, updateKey } from "../lib/help.js"
+  import { uploadCV } from "../lib/connect.ts"
+  import { domain, infoKey, updateKey } from "../lib/help.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
+  import { useValidStore } from "../stores/validStore.ts"
   const modalStore = useModalStore()
   const validStore = useValidStore()
   const { showModel } = modalStore
@@ -12,11 +12,11 @@
   let info = inject(infoKey)
   let update = inject(updateKey, () => {})
   let src = computed(() =>
-    info?.value.cv ? `${domain}/fastify/PDF/${info.value.cv}.pdf` : "",
+    info?.value["cv"] ? `${domain}/fastify/PDF/${info.value["cv"]}.pdf` : "",
   )
   let embed = ref<HTMLEmbedElement>()
   onMounted(() => {
-    if (info?.value.cv && embed.value) {
+    if (info?.value["cv"] && embed.value) {
       embed.value.src = src.value
       preview.value = true
     }

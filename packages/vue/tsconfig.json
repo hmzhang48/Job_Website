@@ -8,7 +8,6 @@
   "compilerOptions": {
     "types": [
       "vite/client"
-    ],
-    "outDir": "dist"
+    ]
   }
 }

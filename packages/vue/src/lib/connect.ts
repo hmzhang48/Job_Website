@@ -1,5 +1,4 @@
-import { domain } from "./help.js"
-import type { province, city, area } from "./help.js"
+import { domain } from "./help.ts"
 interface User {
   email: string
   password: string
@@ -88,12 +87,6 @@ export const validPhone = async ( phone: string ) => {
     .then( ( response ) => response.json() )
     .then( ( value: { result: string } ) => value.result )
 }
-export const areas: area[] = await fetch( domain + "/fastify/JSON/areas.json" )
-  .then( ( response ) => response.json() )
-export const cities: city[] = await fetch( domain + "/fastify/JSON/cities.json" )
-  .then( ( response ) => response.json() )
-export const provinces: province[] = await fetch( domain + "/fastify/JSON/provinces.json" )
-  .then( ( response ) => response.json() )
 export const uploadImage = async ( formData: FormData ) => {
   return fetch( domain + "/fastify/image", {
     method: "POST",

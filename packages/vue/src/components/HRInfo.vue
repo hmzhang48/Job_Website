@@ -5,8 +5,8 @@
     uploadImage,
     existCorp,
     postHRInfo,
-  } from "../lib/connect.js"
-  import { useCanvas, loadImage } from "../lib/help.js"
+  } from "../lib/connect.ts"
+  import { useCanvas, loadImage } from "../lib/help.ts"
   const props = defineProps<{
     exist: boolean
   }>()
@@ -29,7 +29,7 @@
   let invalid = ref<Record<string, boolean>>({})
   let name = ref("")
   const checkName = () => {
-    invalid.value.name = name.value === "" ? true : false
+    invalid.value["name"] = name.value === "" ? true : false
   }
   let origin = await loadImage("./vue.svg")
   let canvas = ref<HTMLCanvasElement>()
@@ -55,12 +55,12 @@
     if (file && file.size < 102_400) {
       avatar.value = file
     } else {
-      invalid.value.avatar = true
+      invalid.value["avatar"] = true
     }
   }
   let hrID = ref("")
   const checkHRID = () => {
-    invalid.value.hrID = hrID.value === "" ? true : false
+    invalid.value["hrID"] = hrID.value === "" ? true : false
   }
   let corpID = ref("")
   const corpIDRegex = new RegExp(
@@ -68,17 +68,17 @@
     "i",
   )
   const checkCorpID = () => {
-    invalid.value.corpID = corpIDRegex.test(corpID.value) ? false : true
+    invalid.value["corpID"] = corpIDRegex.test(corpID.value) ? false : true
   }
   let phone = ref("")
   const phoneRegex = new RegExp(/^\d{11}$/)
   const checkPhone = () => {
     resetCode()
     if (phoneRegex.test(phone.value)) {
-      invalid.value.phone = false
+      invalid.value["phone"] = false
       return true
     } else {
-      invalid.value.phone = true
+      invalid.value["phone"] = true
       return false
     }
   }
@@ -113,13 +113,13 @@
   }
   let code = ref("")
   const checkCode = () => {
-    invalid.value.code = code.value === validCode ? false : true
+    invalid.value["code"] = code.value === validCode ? false : true
   }
   const resetCode = () => {
     validCode = undefined
     if (code.value !== "") {
       code.value = ""
-      invalid.value.code = true
+      invalid.value["code"] = true
     }
   }
   const keys = new Set(["name", "avatar", "hrID", "corpID", "phone", "code"])
@@ -181,9 +181,9 @@
         placeholder="请输入真实姓名"
         required
         v-model.lazy="name"
-        :[invalidKey]="invalid.name"
+        :[invalidKey]="invalid['name']"
         @change="checkName" />
-      <p><small v-show="invalid.name">姓名格式有误</small></p>
+      <p><small v-show="invalid['name']">姓名格式有误</small></p>
       <label for="avatar">头像</label>
       <div class="grid">
         <div>
@@ -193,7 +193,7 @@
             accept="image/*"
             ref="avatarInput"
             @change="checkAvatar" />
-          <p><small v-show="invalid.avatar">头像图片需小于100KB</small></p>
+          <p><small v-show="invalid['avatar']">头像图片需小于100KB</small></p>
         </div>
         <canvas
           id="canvas"
@@ -207,30 +207,30 @@
         type="text"
         placeholder="请填写工号"
         required
-        :[invalidKey]="invalid.hrID"
+        :[invalidKey]="invalid['hrID']"
         v-model.lazy="hrID"
         @change="checkHRID" />
-      <p><small v-show="invalid.hrID">工号格式有误</small></p>
+      <p><small v-show="invalid['hrID']">工号格式有误</small></p>
       <label for="corpID">企业ID</label>
       <input
         id="corpID"
         type="text"
         placeholder="请填写企业统一社会信用代码"
         required
-        :[invalidKey]="invalid.corpID"
+        :[invalidKey]="invalid['corpID']"
         v-model.lazy="corpID"
         @change="checkCorpID" />
-      <p><small v-show="invalid.corpID">统一社会信用代码格式有误</small></p>
+      <p><small v-show="invalid['corpID']">统一社会信用代码格式有误</small></p>
       <label for="phone">电话</label>
       <input
         id="phone"
         type="text"
         placeholder="请输入手机号码"
         required
-        :[invalidKey]="invalid.phone"
+        :[invalidKey]="invalid['phone']"
         v-model.lazy="phone"
         @change="checkPhone" />
-      <p><small v-show="invalid.phone">手机号格式有误</small></p>
+      <p><small v-show="invalid['phone']">手机号格式有误</small></p>
       <label for="code">验证码</label>
       <div class="grid">
         <input
@@ -238,7 +238,7 @@
           type="text"
           placeholder="请输入验证码"
           required
-          :[invalidKey]="invalid.code"
+          :[invalidKey]="invalid['code']"
           v-model.lazy="code"
           @change="checkCode" />
         <button
@@ -249,7 +249,7 @@
           {{ buttonContent }}
         </button>
       </div>
-      <p><small v-show="invalid.code">验证码有误</small></p>
+      <p><small v-show="invalid['code']">验证码有误</small></p>
       <button
         type="submit"
         @click.prevent="submit">

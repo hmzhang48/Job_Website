@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { guide } from "../lib/connect.js"
+import { guide } from "../lib/connect.ts"
 export const useUserStore =
   defineStore( 'user', () => {
     const userState = ref( false )

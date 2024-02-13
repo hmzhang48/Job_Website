@@ -1,12 +1,12 @@
 <script setup lang="ts">
   import { onMounted, ref } from "vue"
   import { storeToRefs } from "pinia"
-  import { useUserStore } from "../stores/userStore.js"
   import BaseInfo from "./BaseInfo.vue"
   import CVInfo from "./CVInfo.vue"
   import ResetAvatar from "./ResetAvatar.vue"
   import ResetEmail from "./ResetEmail.vue"
   import ResetPassword from "./ResetPassword.vue"
+  import { useUserStore } from "../stores/userStore.ts"
   let userStore = useUserStore()
   const { hrState } = storeToRefs(userStore)
   let props = defineProps<{

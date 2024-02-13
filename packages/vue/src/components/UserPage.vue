@@ -1,16 +1,16 @@
 <script setup lang="ts">
   import { ref, computed, watch } from "vue"
-  import { storeToRefs } from "pinia"
   import { useRouter } from "vue-router"
-  import { useUserStore } from "../stores/userStore.js"
-  import { useValidStore } from "../stores/validStore.js"
-  import { useModalStore } from "../stores/modalStore.js"
+  import { storeToRefs } from "pinia"
+  import { getCorpInfo, getJobList, deliverCV } from "../lib/connect.ts"
+  import { domain, trueType, trueLocation, useObserver } from "../lib/help.ts"
+  import type { jobInfo, jobItem } from "../lib/connect.ts"
   import SearchBar from "./SearchBar.vue"
   import FilterPanel from "./FilterPanel.vue"
   import JobList from "./JobList.vue"
-  import { getCorpInfo, getJobList, deliverCV } from "../lib/connect.js"
-  import type { jobInfo, jobItem } from "../lib/connect.js"
-  import { domain, trueType, trueLocation, useObserver } from "../lib/help.js"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { useValidStore } from "../stores/validStore.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const router = useRouter()
   const userStore = useUserStore()
   const validStore = useValidStore()

@@ -1,11 +1,11 @@
 <script setup lang="ts">
   import { ref, watch, computed, inject } from "vue"
-  import { storeToRefs } from "pinia"
   import { RouterLink } from "vue-router"
-  import { useUserStore } from "../stores/userStore.js"
-  import { useValidStore } from "../stores/validStore.js"
-  import { logout } from "../lib/connect.js"
-  import { domain, resetKey } from "../lib/help.js"
+  import { storeToRefs } from "pinia"
+  import { logout } from "../lib/connect.ts"
+  import { domain, resetKey } from "../lib/help.ts"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { useValidStore } from "../stores/validStore.ts"
   let userStore = useUserStore()
   let validStore = useValidStore()
   const { userState, hrState, guideState } = storeToRefs(userStore)

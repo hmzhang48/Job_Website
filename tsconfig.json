@@ -2,33 +2,27 @@
   "compilerOptions": {
     /* Language and Environment */
     "target": "ESNext",
-    "useDefineForClassFields": true,
     "lib": [
-      "DOM",
-      "ESNext"
+      "ESNext",
+      "DOM"
     ],
     /* Modules */
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     /* Emit */
+    "noEmit": true,
     "noEmitOnError": true,
-    "newLine": "LF",
     /* Interop Constraints */
     "isolatedModules": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
     /* Type Checking */
-    "strict": true,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
+    "strict": true,
     /* Completeness */
     "skipLibCheck": true
   }

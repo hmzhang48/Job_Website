@@ -1,22 +1,22 @@
 <script setup lang="ts">
   import { computed, ref, inject, watch } from "vue"
   import { storeToRefs } from "pinia"
-  import { useUserStore } from "../stores/userStore.js"
-  import { useModalStore } from "../stores/modalStore.js"
-  import SearchBar from "./SearchBar.vue"
-  import JobInfo from "./JobInfo.vue"
-  import JobList from "./JobList.vue"
-  import CVList from "./CVList.vue"
-  import CVReview from "./CVReview.vue"
-  import { getJobList, deleteJob, receiveCV, removeCV } from "../lib/connect.js"
-  import type { jobItem, jobInfo, cvItem } from "../lib/connect.js"
+  import { getJobList, deleteJob, receiveCV, removeCV } from "../lib/connect.ts"
   import {
     trueType,
     trueLocation,
     useObserver,
     corpKey,
     domain,
-  } from "../lib/help.js"
+  } from "../lib/help.ts"
+  import type { jobItem, jobInfo, cvItem } from "../lib/connect.ts"
+  import SearchBar from "./SearchBar.vue"
+  import JobInfo from "./JobInfo.vue"
+  import JobList from "./JobList.vue"
+  import CVList from "./CVList.vue"
+  import CVReview from "./CVReview.vue"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const userStore = useUserStore()
   const modalStore = useModalStore()
   const { hrState } = storeToRefs(userStore)
@@ -63,8 +63,8 @@
   let observed = ref<HTMLParagraphElement>()
   useObserver(observed, searchJobs, end)
   let src = computed(() => {
-    return corp?.value.logo
-      ? `${domain}/fastify/image/${corp.value.logo}.png`
+    return corp?.value["logo"]
+      ? `${domain}/fastify/image/${corp.value["logo"]}.png`
       : ""
   })
   let newJob = ref(false)
@@ -99,7 +99,7 @@
   const removeJob = async (no: number) => {
     let result = false
     if (corp) {
-      result = await deleteJob(no, corp.value.corpID)
+      result = await deleteJob(no, corp.value["corpID"])
     }
     if (result) {
       jobBox.value = jobBox.value.filter((value) => value.no !== no)
@@ -136,7 +136,7 @@
         action,
         jobNo.value,
         cv,
-        corp.value.corpName,
+        corp.value["corpName"],
         datetime,
         location,
       )
@@ -161,15 +161,15 @@
     <article>
       <header>
         <img :src="src" />
-        <span>{{ corp?.corpName }}</span>
+        <span>{{ corp?.["corpName"] }}</span>
       </header>
-      <p>{{ corp?.brief }}</p>
+      <p>{{ corp?.["brief"] }}</p>
     </article>
     <JobInfo
       v-if="newJob"
       :no="no"
       :job="job"
-      :corpID="corp?.corpID ? corp.corpID : ''"
+      :corpID="corp?.['corpID'] ? corp['corpID'] : ''"
       @finishJob="finishJob"
       @patchJob="patchJob" />
     <article v-show="!newJob">

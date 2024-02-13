@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { cvItem } from "../lib/connect"
+  import type { cvItem } from "../lib/connect.ts"
   const props = defineProps<{
     cvList: cvItem[]
   }>()

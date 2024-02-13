@@ -1,13 +1,13 @@
 <script setup lang="ts">
   import { ref, watch, onMounted } from "vue"
-  import { validPhone, uploadImage, postUserInfo } from "../lib/connect.js"
+  import { validPhone, uploadImage, postUserInfo } from "../lib/connect.ts"
   import {
     initProvince,
     initCity,
     initArea,
     useCanvas,
     loadImage,
-  } from "../lib/help.js"
+  } from "../lib/help.ts"
   const emits = defineEmits<{
     guide: []
   }>()
@@ -15,7 +15,7 @@
   let invalid = ref<Record<string, boolean>>({})
   let name = ref("")
   const checkName = () => {
-    invalid.value.name = name.value === "" ? true : false
+    invalid.value["name"] = name.value === "" ? true : false
   }
   let initial = await loadImage("./vue.svg")
   let canvas = ref<HTMLCanvasElement>()
@@ -40,17 +40,17 @@
     const file = avatarInput.value?.files?.[0]
     if (file && file.size < 102_400) {
       avatar.value = file
-      invalid.value.avatar = false
+      invalid.value["avatar"] = false
     } else {
       if (!avatar.value) {
-        invalid.value.avatar = true
+        invalid.value["avatar"] = true
       }
     }
   }
   let id = ref("")
   const idRegex = new RegExp(/^\d{17}([\dXx])$/)
   const checkID = () => {
-    invalid.value.id = idRegex.test(id.value) ? false : true
+    invalid.value["id"] = idRegex.test(id.value) ? false : true
   }
   let provinceSelect = ref<HTMLSelectElement>()
   let citySelect = ref<HTMLSelectElement>()
@@ -70,18 +70,18 @@
   }
   let area = ref("area")
   const checkArea = () => {
-    invalid.value.area = area.value === "area" ? true : false
+    invalid.value["area"] = area.value === "area" ? true : false
   }
   let phone = ref("")
   const phoneRegex = new RegExp(/^\d{11}$/)
   const checkPhone = () => {
     resetCode()
-    invalid.value.phone = phoneRegex.test(phone.value) ? false : true
+    invalid.value["phone"] = phoneRegex.test(phone.value) ? false : true
   }
   let loading = ref(false)
   let validCode: string
   const sendCode = async () => {
-    if (invalid.value.phone === false) {
+    if (invalid.value["phone"] === false) {
       loading.value = true
       validCode = await validPhone(phone.value)
       loading.value = false
@@ -109,13 +109,13 @@
   }
   let code = ref("")
   const checkCode = () => {
-    invalid.value.code = code.value === validCode ? false : true
+    invalid.value["code"] = code.value === validCode ? false : true
   }
   const resetCode = () => {
     validCode = ""
     if (code.value !== "") {
       code.value = ""
-      invalid.value.code = true
+      invalid.value["code"] = true
     }
   }
   const keys = ["name", "id", "area", "phone", "code"]
@@ -168,10 +168,10 @@
         type="text"
         placeholder="请输入真实姓名"
         required
-        :[invalidKey]="invalid.name"
+        :[invalidKey]="invalid['name']"
         v-model.lazy="name"
         @change="checkName" />
-      <p><small v-show="invalid.name">姓名格式有误</small></p>
+      <p><small v-show="invalid['name']">姓名格式有误</small></p>
       <label for="avatar">头像</label>
       <div class="grid">
         <div>
@@ -181,7 +181,7 @@
             accept="image/*"
             ref="avatarInput"
             @change="checkAvatar" />
-          <p><small v-show="invalid.avatar">头像图片需小于100KB</small></p>
+          <p><small v-show="invalid['avatar']">头像图片需小于100KB</small></p>
         </div>
         <canvas
           id="canvas"
@@ -195,16 +195,16 @@
         type="text"
         placeholder="请输入身份证号"
         required
-        :[invalidKey]="invalid.id"
+        :[invalidKey]="invalid['id']"
         v-model.lazy="id"
         @change="checkID" />
-      <p><small v-show="invalid.id">身份证号格式有误</small></p>
+      <p><small v-show="invalid['id']">身份证号格式有误</small></p>
       <fieldset>
         <legend>居住地</legend>
         <div class="grid">
           <select
             id="province"
-            :[invalidKey]="invalid.area"
+            :[invalidKey]="invalid['area']"
             ref="provinceSelect"
             @change="addCity">
             <option
@@ -215,7 +215,7 @@
           </select>
           <select
             id="city"
-            :[invalidKey]="invalid.area"
+            :[invalidKey]="invalid['area']"
             ref="citySelect"
             @change="addArea">
             <option
@@ -226,7 +226,7 @@
           </select>
           <select
             id="area"
-            :[invalidKey]="invalid.area"
+            :[invalidKey]="invalid['area']"
             ref="areaSelect"
             v-model.lazy="area"
             @change="checkArea">
@@ -237,7 +237,7 @@
             </option>
           </select>
         </div>
-        <p><small v-show="invalid.area">居住地未选择</small></p>
+        <p><small v-show="invalid['area']">居住地未选择</small></p>
       </fieldset>
       <label for="phone">电话</label>
       <input
@@ -245,10 +245,10 @@
         type="text"
         placeholder="请输入手机号码"
         required
-        :[invalidKey]="invalid.phone"
+        :[invalidKey]="invalid['phone']"
         v-model.lazy="phone"
         @change="checkPhone" />
-      <p><small v-show="invalid.phone">手机号格式有误</small></p>
+      <p><small v-show="invalid['phone']">手机号格式有误</small></p>
       <label for="code">验证码</label>
       <div class="grid">
         <input
@@ -256,7 +256,7 @@
           type="text"
           placeholder="请输入验证码"
           required
-          :[invalidKey]="invalid.code"
+          :[invalidKey]="invalid['code']"
           v-model.lazy="code"
           @change="checkCode" />
         <button
@@ -267,7 +267,7 @@
           {{ buttonContent }}
         </button>
       </div>
-      <p><small v-show="invalid.code">验证码有误</small></p>
+      <p><small v-show="invalid['code']">验证码有误</small></p>
       <button
         type="submit"
         @click.prevent="submit">

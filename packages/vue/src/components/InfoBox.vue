@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { ref, onMounted } from "vue"
-  import { useModalStore } from "../stores/modalStore.js"
-  import { getInfoBox, changeInfoBox } from "../lib/connect.js"
-  import type { infoItem } from "../lib/connect.js"
+  import { getInfoBox, changeInfoBox } from "../lib/connect.ts"
+  import type { infoItem } from "../lib/connect.ts"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
   let infoBox = ref<infoItem[]>([])

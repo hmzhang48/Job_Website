@@ -1,9 +1,9 @@
 <script setup lang="ts">
-  import HRInfo from "./HRInfo.vue"
-  import CorpInfo from "./CorpInfo.vue"
   import { ref, watch } from "vue"
   import { storeToRefs } from "pinia"
-  import { useModalStore } from "../stores/modalStore.js"
+  import HRInfo from "./HRInfo.vue"
+  import CorpInfo from "./CorpInfo.vue"
+  import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { modalState, confirmState } = storeToRefs(modalStore)
   const { showModel } = modalStore

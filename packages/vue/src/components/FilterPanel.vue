@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, watch, onMounted } from "vue"
-  import { initProvince, initCity } from "../lib/help.js"
-  import type { jobInfo } from "../lib/connect.js"
+  import { initProvince, initCity } from "../lib/help.ts"
+  import type { jobInfo } from "../lib/connect.ts"
   const emits = defineEmits<{
     filter: [
       condition: Partial<Omit<jobInfo, "overview">> & {

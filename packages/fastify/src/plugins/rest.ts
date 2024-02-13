@@ -6,7 +6,7 @@ import crypto from "node:crypto"
 import random from "crypto-random-string"
 import { eq, desc, and, not, like, arrayContains, inArray, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
-import { users, userInfo, hrInfo, corpInfo, jobInfo, infoBox } from "../lib/schema"
+import { users, userInfo, hrInfo, corpInfo, jobInfo, infoBox } from "../lib/schema.ts"
 const regexp = "^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$"
 const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
   const server = f.withTypeProvider<JsonSchemaToTsProvider<{
@@ -1719,15 +1719,9 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       reply.send( { result: result } )
     }
   )
-  server.get( "/infobox/:event",
+  server.get( "/infobox-update/",
     {
       schema: {
-        params: {
-          type: 'object',
-          properties: { event: { enum: [ "update" ] } },
-          required: [ "event" ],
-          additionalProperties: false
-        } as const satisfies JSONSchema,
         response: {
           200: {
             type: 'object',
@@ -1741,26 +1735,24 @@ const restPlugin: FastifyPluginAsync = fp( async ( f ) => {
       }
     },
     async ( request, reply ) => {
-      if ( request.params.event === "update" ) {
-        const list = await server.drizzle.query.infoBox.findMany( {
-          columns: { uuid: false },
-          where: eq( infoBox.uuid, request.user.uuid ),
-          orderBy: [ desc( infoBox.no ) ],
-          limit: 1,
-          offset: 1
+      const list = await server.drizzle.query.infoBox.findMany( {
+        columns: { uuid: false },
+        where: eq( infoBox.uuid, request.user.uuid ),
+        orderBy: [ desc( infoBox.no ) ],
+        limit: 1,
+        offset: 1
+      } )
+        .catch( ( error ) => {
+          server.log.error( error )
+          return []
         } )
-          .catch( ( error ) => {
-            server.log.error( error )
-            return []
-          } )
-        if ( list.length === 1 ) {
-          let payload = `event:${ request.params.event }\n`
-          payload += `data:${ JSON.stringify( list[ 0 ] ) }\n`
-          payload += `retry:3000\n`
-          payload += `\n`
-          reply.headers( { "Content-Type": "text/event-stream; charset=utf-8" } )
-          reply.send( { event: payload } )
-        }
+      if ( list.length === 1 ) {
+        let payload = `event:update\n`
+        payload += `data:${ JSON.stringify( list[ 0 ] ) }\n`
+        payload += `retry:3000\n`
+        payload += `\n`
+        reply.headers( { "Content-Type": "text/event-stream; charset=utf-8" } )
+        reply.send( { event: payload } )
       }
     }
   )
