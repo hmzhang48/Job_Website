@@ -1,4 +1,4 @@
-# Indeed-like Job Website
+# Job Website
 - A job portal for both job seekers and recruiters.
 - Job seekers can browse and apply for job openings, submitting their resumes, while recruiters can post and manage job listings, assess incoming resumes, and send interview invitations.
 - The entire project is completely built using **Typescript**, and the entire source code is managed through **Git** and hosted on **GitHub**.
