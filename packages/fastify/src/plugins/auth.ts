@@ -1,39 +1,34 @@
-import type { FastifyPluginAsync, FastifyRequest } from "fastify"
+import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 declare module "@fastify/jwt" {
   interface FastifyJWT {
-    payload: string
+    payload: {
+      data: string
+    }
     user: {
-      uuid: string,
+      uuid: string
       hr: boolean
     }
   }
 }
-declare module "fastify" {
-  interface FastifyInstance {
-    authJWT: ( request: FastifyRequest ) => Promise<boolean>
-  }
-}
-const urlList = new Set(
-  [ "/email-check", "/email-validate", "/phone-validate", "/register", "/login" ]
-)
-const authPlugin: FastifyPluginAsync = fp( async ( f ) => {
-  f.decorate( "authJWT", async ( request: FastifyRequest ) => {
-    try {
-      await request.jwtVerify()
-      return true
-    } catch ( error ) {
-      f.log.error( error )
-      return false
-    }
-  } )
+const urlList = new Set( [
+  "/email-check", "/email-validate", "/phone-validate",
+  "/register", "/login"
+] )
+const fileList = new Set( [ "png", "pdf" ] )
+const auth: FastifyPluginAsync = fp( async ( f ) => {
   f.addHook( "preValidation", async ( request, reply ) => {
-    if ( !urlList.has( request.url ) ) {
-      const result = await f.authJWT( request )
-      if ( !result ) {
+    if (
+      !urlList.has( request.url.split( "?" )[ 0 ] ) &&
+      !fileList.has( request.url.slice( -3 ) )
+    ) {
+      try {
+        await request.jwtVerify()
+      } catch ( error ) {
+        f.log.error( error )
         reply.code( 401 ).send()
       }
     }
   } )
 } )
-export default authPlugin
+export default auth

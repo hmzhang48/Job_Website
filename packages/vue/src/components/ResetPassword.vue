@@ -1,8 +1,9 @@
 <script setup lang="ts">
   import { ref, watch, inject } from "vue"
   import { storeToRefs } from "pinia"
-  import { resetPassword, logout } from "../lib/connect.ts"
-  import { resetKey } from "../lib/help.ts"
+  import { resetPassword } from "../lib/fetch/reset.ts"
+  import { logout } from "../lib/fetch/guide.ts"
+  import { resetKey } from "../lib/inject.ts"
   import { useUserStore } from "../stores/userStore.ts"
   import { useModalStore } from "../stores/modalStore.ts"
   const userStore = useUserStore()
@@ -11,16 +12,17 @@
   const { modalState } = storeToRefs(modalStore)
   const { showModel } = modalStore
   const reset = inject(resetKey, () => {})
-  const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let oldPassword = ref("")
   let newPassword = ref("")
   const check = (password: string) =>
     password.length >= 8 && password.length <= 25 ? true : false
+  let loading = ref(false)
   const submit = async () => {
     invalid.value["oldPassword"] = check(oldPassword.value) ? false : true
     invalid.value["newPassword"] = check(newPassword.value) ? false : true
     if (!invalid.value["newPassword"] && !invalid.value["oldPassword"]) {
+      loading.value = true
       const result = await resetPassword(oldPassword.value, newPassword.value)
       if (result === "修改成功") {
         showModel("密码修改成功,请重新登陆")
@@ -34,8 +36,9 @@
           }
         })
       } else {
-        showModel(result)
+        showModel(result ?? "非法用户")
       }
+      loading.value = false
     }
   }
 </script>
@@ -48,24 +51,31 @@
       type="password"
       placeholder="请输入密码"
       required
-      :[invalidKey]="invalid['oldPassword']"
+      :aria-invalid="invalid['oldPassword']"
       v-model.lazy="oldPassword" />
-    <p v-show="invalid['oldPassword']"><small>密码需8位以上</small></p>
+    <small v-show="invalid['oldPassword']">密码需8位以上</small>
     <label for="newPassword">新密码</label>
     <input
       id="newPassword"
       type="password"
       placeholder="请输入密码"
       required
-      :[invalidKey]="invalid['newPassword']"
+      :aria-invalid="invalid['newPassword']"
       v-model.lazy="newPassword" />
-    <p v-show="invalid['newPassword']"><small>密码需8位以上</small></p>
-    <button
-      @click.prevent="submit"
-      type="submit">
-      确认
-    </button>
+    <small v-show="invalid['newPassword']">密码需8位以上</small>
+    <div class="button">
+      <button
+        :aria-busy="loading"
+        @click.prevent="submit">
+        确认
+      </button>
+    </div>
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+  }
+</style>

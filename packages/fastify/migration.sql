@@ -53,7 +53,7 @@ CREATE TABLE jobinfo (
     location  text NOT NULL,
     corpid    text NOT NULL,
     no        serial,
-    cvlist    text[] NOT NULL DEFAULT '{}'
+    cvlist    text[]
 );
 CREATE TABLE infobox (
     uuid      uuid NOT NULL,

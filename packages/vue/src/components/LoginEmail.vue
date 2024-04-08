@@ -1,10 +1,9 @@
 <script setup lang="ts">
   import { ref } from "vue"
-  import { login } from "../lib/connect.ts"
-  const emits = defineEmits<{
-    login: []
-  }>()
-  const invalidKey = "aria-invalid"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { login } from "../lib/fetch/guide.ts"
+  const userStore = useUserStore()
+  const { getGuide } = userStore
   let invalid = ref<Record<string, boolean>>({})
   let email = ref("")
   let password = ref("")
@@ -21,19 +20,21 @@
     }
     return result
   }
+  let loading = ref(false)
   const submit = async () => {
     const result = check()
     if (result) {
+      loading.value = true
       const user = {
         email: email.value,
-        password: password.value,
+        password: password.value
       }
       const result = await login(user)
       switch (result) {
         case true: {
           invalid.value["email"] = true
           invalid.value["password"] = true
-          emits("login")
+          getGuide()
           break
         }
         case false: {
@@ -44,6 +45,7 @@
           invalid.value["email"] = true
         }
       }
+      loading.value = false
     }
   }
 </script>
@@ -57,25 +59,32 @@
         type="email"
         placeholder="请输入电子邮箱地址"
         required
-        :[invalidKey]="invalid['email']"
+        :aria-invalid="invalid['email']"
         v-model.lazy="email" />
-      <p v-show="invalid['email']"><small>用户不存在</small></p>
+      <small v-show="invalid['email']">用户不存在</small>
       <label for="password">密码</label>
       <input
         id="password"
         type="password"
         placeholder="请输入密码"
         required
-        :[invalidKey]="invalid['password']"
+        :aria-invalid="invalid['password']"
         v-model.lazy="password" />
-      <p v-show="invalid['password']"><small>密码错误</small></p>
-      <button
-        type="submit"
-        @click.prevent="submit">
-        登陆
-      </button>
+      <small v-show="invalid['password']">密码错误</small>
+      <div class="button">
+        <button
+          :aria-busy="loading"
+          @click.prevent="submit">
+          登陆
+        </button>
+      </div>
     </article>
   </section>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+  }
+</style>

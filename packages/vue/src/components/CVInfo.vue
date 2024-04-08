@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { ref, inject, onMounted, computed } from "vue"
   import { storeToRefs } from "pinia"
-  import { uploadCV } from "../lib/connect.ts"
-  import { domain, infoKey, updateKey } from "../lib/help.ts"
+  import { uploadCV } from "../lib/fetch/cv.ts"
+  import { infoKey, updateKey } from "../lib/inject.ts"
   import { useModalStore } from "../stores/modalStore.ts"
   import { useValidStore } from "../stores/validStore.ts"
   const modalStore = useModalStore()
@@ -12,7 +12,7 @@
   let info = inject(infoKey)
   let update = inject(updateKey, () => {})
   let src = computed(() =>
-    info?.value["cv"] ? `${domain}/fastify/PDF/${info.value["cv"]}.pdf` : "",
+    info?.value["cv"] ? `/fastify/PDF/${info.value["cv"]}.pdf` : ""
   )
   let embed = ref<HTMLEmbedElement>()
   onMounted(() => {
@@ -40,7 +40,9 @@
   }
   const upload = async () => {
     if (newCV.value) {
-      const fileName = await uploadCV(newCV.value)
+      const formData = new FormData()
+      formData.append("cv", newCV.value)
+      const fileName = await uploadCV(formData)
       if (fileName) {
         showModel("简历上传成功")
         cvState.value = true
@@ -72,7 +74,7 @@
         上传
       </button>
     </div>
-    <p v-show="wrong"><small>"简历PDF需小于5MB"</small></p>
+    <small v-show="wrong">"简历PDF需小于5MB"</small>
     <embed
       v-show="preview"
       type="application/pdf"
@@ -82,4 +84,9 @@
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .grid {
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+  }
+</style>

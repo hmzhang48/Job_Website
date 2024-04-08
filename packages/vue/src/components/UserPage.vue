@@ -2,9 +2,12 @@
   import { ref, computed, watch } from "vue"
   import { useRouter } from "vue-router"
   import { storeToRefs } from "pinia"
-  import { getCorpInfo, getJobList, deliverCV } from "../lib/connect.ts"
-  import { domain, trueType, trueLocation, useObserver } from "../lib/help.ts"
-  import type { jobInfo, jobItem } from "../lib/connect.ts"
+  import { getCorpInfo } from "../lib/fetch/corpinfo.ts"
+  import { getJobList } from "../lib/fetch/jobinfo.ts"
+  import { deliverCV } from "../lib/fetch/cv.ts"
+  import { trueType, trueLocation } from "../lib/help.ts"
+  import { useObserver } from "../lib/use.ts"
+  import type { jobInfo, jobItem } from "../lib/interface.ts"
   import SearchBar from "./SearchBar.vue"
   import FilterPanel from "./FilterPanel.vue"
   import JobList from "./JobList.vue"
@@ -22,7 +25,7 @@
   watch(modalState, () => {
     if (confirmState.value && !cvState.value) {
       router.push({
-        path: "/userSetting/cv",
+        path: "/userSetting/cv"
       })
       confirmState.value = false
     }
@@ -36,7 +39,7 @@
     type: "",
     salary: "",
     location: "",
-    logo: "",
+    logo: ""
   })
   const getCondition = (c: Partial<Omit<jobInfo, "overview" | "position">>) => {
     Object.assign(filter.value, c)
@@ -51,32 +54,26 @@
   })
   let jobBox = ref<jobItem[]>([])
   const searchJobs = async () => {
-    let c: Partial<Omit<jobInfo, "overview">> & {
-      logo?: string
-      offset?: number
-    } = Object.create(null)
+    let c: Record<string, string | number> = Object.create(null)
     if (keyword.value) {
-      c.position = keyword.value
+      c["position"] = keyword.value
     }
-    Object.assign(c, filter.value)
-    for (const [key, value] of Object.entries(c)) {
+    for (const [key, value] of Object.entries(filter.value)) {
       if (!value) {
-        delete c[
-          key as keyof (Partial<Omit<jobInfo, "overview">> & {
-            logo?: string
-            offset?: number
-          })
-        ]
+        c[key] = value
       }
     }
-    c.offset = offset
+    c["offset"] = offset
+    c["limit"] = limit
     const jobList = await getJobList(c)
-    jobBox.value.push(...jobList)
-    if (jobList.length < limit) {
-      end.value = true
-      offset += jobList.length
-    } else {
-      offset += limit
+    if (jobList) {
+      jobBox.value.push(...jobList)
+      if (jobList.length < limit) {
+        end.value = true
+        offset += jobList.length
+      } else {
+        offset += limit
+      }
     }
   }
   const restart = () => {
@@ -88,22 +85,22 @@
   useObserver(observed, searchJobs, end)
   let corp = ref({
     show: false,
-    corpname: "",
+    corpName: "",
     logo: "",
-    brief: "",
+    brief: ""
   })
-  let src = computed(() => {
-    return corp.value.logo
-      ? `${domain}/fastify/image/${corp.value.logo}.png`
-      : ""
-  })
+  let src = computed(() =>
+    corp.value.logo ? `/fastify/image/${corp.value.logo}.png` : ""
+  )
   const showCorp = async (logo: string) => {
     let c = await getCorpInfo(logo)
-    Object.assign(corp.value, c.info)
-    corp.value.show = true
-    corp.value.logo = logo
-    filter.value.logo = logo
-    restart()
+    if (c) {
+      Object.assign(corp.value, c.info)
+      corp.value.show = true
+      corp.value.logo = logo
+      filter.value.logo = logo
+      restart()
+    }
   }
   const hideCorp = () => {
     corp.value.show = false
@@ -132,38 +129,88 @@
   <SearchBar
     :hrState="hrState"
     @search="getKeyword" />
-  <article v-if="corp.show">
-    <header>
-      <img :src="src" />
-      <span>{{ corp.corpname }}</span>
-    </header>
-    <p>{{ corp.brief }}</p>
-    <footer><button @click.prevent="hideCorp">关闭</button></footer>
-  </article>
-  <article>
-    <template
-      v-for="job in jobBox"
-      :key="job.no">
-      <JobList
-        :hrState="hrState"
-        :corpname="job.corpInfo.corpName"
-        :logo="job.corpInfo.logo"
-        :position="job.position"
-        :no="job.no"
-        @searchCorp="showCorp"
-        @sendCV="sendCV">
-        <template #summary>
-          <h1>{{ job.position }}</h1>
-          <mark>{{ trueType(job.type) }}</mark>
-          <mark>{{ job.salary }}</mark>
-          <mark>{{ trueLocation(job.location) }}</mark>
+  <div class="grid">
+    <div>
+      <Transition name="show">
+        <article v-if="corp.show">
+          <header>
+            <img :src="src" />
+            <strong>{{ corp.corpName }}</strong>
+          </header>
+          <p>{{ corp.brief }}</p>
+          <footer><button @click.prevent="hideCorp">关闭</button></footer>
+        </article>
+      </Transition>
+      <TransitionGroup name="list">
+        <template
+          v-for="job in jobBox"
+          :key="job.no">
+          <JobList
+            :hrState="hrState"
+            :corpName="job.corpInfo.corpName"
+            :logo="job.corpInfo.logo"
+            :position="job.position"
+            :no="job.no"
+            @searchCorp="showCorp"
+            @sendCV="sendCV">
+            <template #summary>
+              <p>
+                <strong>{{ job.position }}</strong>
+              </p>
+              <ins>{{ trueType(job.type) }}</ins>
+              <span>,&nbsp;</span>
+              <ins>{{ job.salary }}</ins>
+              <span>,&nbsp;</span>
+              <ins>{{ trueLocation(job.location) }}</ins>
+            </template>
+            <template #overview>{{ job.overview }}</template>
+          </JobList>
         </template>
-        <template #overview>{{ job.overview }}</template>
-      </JobList>
-    </template>
-    <p ref="observed">{{ tip }}</p>
-  </article>
-  <FilterPanel @filter="getCondition" />
+      </TransitionGroup>
+      <p
+        class="tip"
+        ref="observed">
+        <small>{{ tip }}</small>
+      </p>
+    </div>
+    <div>
+      <FilterPanel @filter="getCondition" />
+    </div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  img {
+    height: 48px;
+    margin: auto 12px;
+  }
+  .grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  .tip {
+    text-align: center;
+  }
+  .list-move,
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+  .list-enter-from,
+  .list-leave-to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  .list-leave-active {
+    position: absolute;
+  }
+  .show-enter-active,
+  .show-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+  .show-enter-from,
+  .show-leave-to {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+</style>

@@ -8,68 +8,46 @@
   "scripts": {
     "generate": "drizzle-kit generate:pg",
     "drop": "drizzle-kit drop",
-    "migrate": "tsx ./src/lib/migration.ts",
-    "test": "NODE_OPTIONS='--loader=tsx' ava ./src/test/test.ts",
-    "dev": "tsx ./src/app.ts"
+    "migrate": "tsx --env-file=.env ./src/lib/migration.ts",
+    "dev": "tsx watch --env-file=.env ./src/app.ts",
+    "test": "ava --watch ./src/test/test.ts"
   },
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
-    "@fastify/awilix": "^5.0.0",
+    "@fastify/awilix": "^5.1.0",
     "@fastify/cookie": "^9.3.1",
     "@fastify/cors": "^9.0.1",
     "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^11.1.1",
     "@fastify/jwt": "^8.0.0",
-    "@fastify/multipart": "^8.1.0",
+    "@fastify/multipart": "^8.2.0",
     "@fastify/postgres": "^5.2.2",
     "@fastify/secure-session": "^7.1.0",
     "@fastify/sensible": "^5.5.0",
-    "@fastify/static": "^7.0.1",
+    "@fastify/static": "^7.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^3.0.0",
-    "@fastify/websocket": "^8.3.1",
-    "awilix": "^10.0.1",
+    "@fastify/websocket": "^10.0.1",
+    "awilix": "^10.0.2",
     "crypto-random-string": "^5.0.0",
-    "drizzle-orm": "^0.29.3",
-    "fast-jwt": "^3.3.3",
-    "fastify": "^4.26.0",
+    "drizzle-orm": "^0.30.7",
+    "fast-jwt": "^4.0.0",
+    "fastify": "^4.26.2",
     "fastify-plugin": "^4.5.1",
     "fluent-json-schema": "^4.2.1",
     "get-jwks": "^9.0.1",
-    "json-schema-to-ts": "^3.0.0",
-    "nodemailer": "^6.9.9",
-    "pg": "^8.11.3",
-    "postgres": "^3.4.3",
+    "json-schema-to-ts": "^3.0.1",
+    "nodemailer": "^6.9.13",
+    "pg": "^8.11.5",
+    "postgres": "^3.4.4",
     "ws": "^8.16.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.16",
+    "@types/node": "^20.12.5",
     "@types/nodemailer": "^6.4.14",
-    "@types/pg": "^8.11.0",
+    "@types/pg": "^8.11.4",
     "@types/ws": "^8.5.10",
     "drizzle-kit": "^0.20.14",
-    "pino-pretty": "^10.3.1",
-    "tsx": "^4.7.0"
-  },
-  "eslintConfig": {
-    "env": {
-      "node": true
-    },
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": "latest",
-      "sourceType": "module"
-    },
-    "plugins": [
-      "@typescript-eslint",
-      "@stylistic/ts",
-      "unicorn",
-      "ava"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:unicorn/recommended",
-      "plugin:ava/recommended"
-    ]
+    "pino-pretty": "^11.0.0",
+    "tsx": "^4.7.2"
   }
 }

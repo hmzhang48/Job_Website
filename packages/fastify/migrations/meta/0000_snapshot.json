@@ -1,8 +1,8 @@
 {
+  "id": "a7ac5a8b-ad1b-4d03-80ec-87a31fe2e1af",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
-  "id": "993e9ae9-7cdd-43e6-bef9-ee6bda17fc3f",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "corpinfo": {
       "name": "corpinfo",
@@ -253,8 +253,7 @@
           "name": "cvlist",
           "type": "text[]",
           "primaryKey": false,
-          "notNull": true,
-          "default": []
+          "notNull": false
         }
       },
       "indexes": {},
@@ -440,8 +439,8 @@
   },
   "schemas": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   }
 }

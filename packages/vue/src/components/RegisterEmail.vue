@@ -1,16 +1,15 @@
 <script setup lang="ts">
-  import { ref, watch } from "vue"
-  import { validMail, existMail, register } from "../lib/connect.ts"
-  const emits = defineEmits<{
-    register: []
-  }>()
+  import { ref } from "vue"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { validMail, existMail, register } from "../lib/fetch/register.ts"
+  const userStore = useUserStore()
+  const { getGuide } = userStore
   let step = ref(1)
   let hr: boolean
   const checkHR = (choice: boolean) => {
     hr = choice
     step.value++
   }
-  const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let email = ref("")
   let tip = ref("")
@@ -20,50 +19,46 @@
     if (emailRegex.test(email.value)) {
       loading.value = true
       let result = await existMail(email.value)
-      loading.value = false
       if (result) {
         tip.value = "电子邮件地址已被注册,请直接登陆"
         invalid.value["email"] = true
       } else {
         invalid.value["email"] = false
+        await sendCode()
         step.value++
       }
+      loading.value = false
     } else {
       tip.value = "电子邮件地址格式不正确"
       invalid.value["email"] = true
     }
   }
   let validCode: string
-  const sendCode = async () => {
-    loading.value = true
-    validCode = await validMail(email.value)
-    loading.value = false
-    if (validCode !== "") {
-      countDown()
-    }
-  }
-  let buttonContent = ref("发送验证码")
   let disabled = ref(false)
-  const countDown = () => {
-    let wait = 60
+  const sendCode = async () => {
     disabled.value = true
+    countDown()
+    validCode = await validMail(email.value)
+  }
+  let wait = ref(60)
+  const countDown = () => {
     const count = () => {
-      if (wait >= 0) {
-        buttonContent.value = wait + "秒后可重试"
-        wait -= 1
+      if (wait.value > 0) {
+        wait.value -= 1
         setTimeout(count, 1000)
       } else {
-        buttonContent.value = "请先发送验证码"
         disabled.value = false
+        wait.value = 60
       }
     }
     count()
   }
   let code = ref("")
   const checkCode = () => {
-    if (code.value === validCode) {
+    if (validCode !== "" && code.value === validCode) {
       invalid.value["code"] = false
       step.value++
+      disabled.value = false
     } else {
       invalid.value["code"] = true
     }
@@ -72,98 +67,77 @@
   const checkPassword = async () => {
     if (password.value.length >= 8 && password.value.length <= 25) {
       invalid.value["password"] = false
-      step.value++
+      submit()
     } else {
       invalid.value["password"] = true
     }
   }
-  watch(step, async () => {
-    if (step.value > 5) {
-      loading.value = true
-      const user = {
-        email: email.value,
-        password: password.value,
-        hr: hr,
-      }
-      const result = await register(user)
-      if (result) {
-        emits("register")
-      }
-      loading.value = false
+  const submit = async () => {
+    loading.value = true
+    const user = {
+      email: email.value,
+      password: password.value,
+      hr: hr
     }
-  })
+    const result = await register(user)
+    if (result) {
+      getGuide()
+    }
+    loading.value = false
+  }
 </script>
 
 <template>
   <section>
     <article v-if="step === 1">
-      <div class="grid">
-        <span
-          role="button"
-          @click.prevent="step++">
-          现在加入
-        </span>
+      <div class="button">
+        <button @click.prevent="step++">现在加入</button>
       </div>
     </article>
     <article v-if="step === 2">
-      <div class="grid">
-        <span
-          role="button"
-          @click.prevent="checkHR(false)">
-          我是求职者
-        </span>
-        <span
-          role="button"
-          @click.prevent="checkHR(true)">
-          我是HR
-        </span>
+      <div class="button">
+        <button @click.prevent="checkHR(false)">我是求职者</button>
+        <button @click.prevent="checkHR(true)">我是HR</button>
       </div>
     </article>
     <article v-if="step === 3">
-      <label>电子邮件</label>
+      <label for="email">电子邮件</label>
       <input
         id="email"
         type="email"
         placeholder="请输入电子邮箱地址"
         required
-        :[invalidKey]="invalid['email']"
+        :aria-invalid="invalid['email']"
         v-model.lazy="email" />
-      <p>
-        <small v-show="invalid['email']">{{ tip }}</small>
-      </p>
-      <button
-        :aria-busy="loading"
-        type="button"
-        @click.prevent="checkEmail">
-        下一步
-      </button>
+      <small v-show="invalid['email']">{{ tip }}</small>
+      <div class="button">
+        <button
+          :aria-busy="loading"
+          @click.prevent="checkEmail">
+          下一步
+        </button>
+      </div>
     </article>
     <article v-if="step === 4">
       <label for="code">验证码</label>
-      <div class="grid">
+      <fieldset role="group">
         <input
           id="code"
           type="text"
           placeholder="请输入验证码"
           required
-          :[invalidKey]="invalid['code']"
+          :aria-invalid="invalid['code']"
           v-model.lazy="code" />
-        <button
+        <input
           type="button"
-          :aria-busy="loading"
+          :value="disabled ? `${wait}秒后可重试` : '发送验证码'"
           :disabled="disabled"
-          @click.prevent="sendCode">
-          {{ buttonContent }}
-        </button>
+          @click.prevent="sendCode" />
+      </fieldset>
+      <small v-show="invalid['code']">验证码不正确</small>
+      <div class="button">
+        <button @click.prevent="checkCode">下一步</button>
       </div>
-      <p v-show="invalid['code']">
-        <small>验证码不正确</small>
-      </p>
-      <button
-        type="button"
-        @click.prevent="checkCode">
-        下一步
-      </button>
     </article>
     <article v-if="step >= 5">
       <label for="password">密码</label>
@@ -172,19 +146,24 @@
         type="password"
         placeholder="请输入密码"
         required
-        :[invalidKey]="invalid['password']"
+        :aria-invalid="invalid['password']"
         v-model.lazy="password" />
-      <p v-show="invalid['password']">
-        <small>密码需8位以上</small>
-      </p>
-      <button
-        type="submit"
-        :aria-busy="loading"
-        @click.prevent="checkPassword">
-        注册
-      </button>
+      <small v-show="invalid['password']">密码需8位以上</small>
+      <div class="button">
+        <button
+          :aria-busy="loading"
+          @click.prevent="checkPassword">
+          下一步
+        </button>
+      </div>
     </article>
   </section>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+  }
+</style>

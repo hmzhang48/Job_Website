@@ -6,7 +6,7 @@ declare module "fastify" {
     mail: mailer.Transporter
   }
 }
-const mailPlugin: FastifyPluginAsync = fp( async ( f ) => {
+const mail: FastifyPluginAsync = fp( async ( f ) => {
   const testAccount = await mailer.createTestAccount()
   const transporter = mailer.createTransport( {
     host: "smtp.ethereal.email",
@@ -15,7 +15,7 @@ const mailPlugin: FastifyPluginAsync = fp( async ( f ) => {
     secure: false,
     auth: {
       user: testAccount.user,
-      pass: testAccount.pass,
+      pass: testAccount.pass
     }
   } )
   f.decorate( "mail", transporter )
@@ -23,4 +23,4 @@ const mailPlugin: FastifyPluginAsync = fp( async ( f ) => {
     f.mail.close()
   } )
 } )
-export default mailPlugin
+export default mail

@@ -1,23 +1,20 @@
 <script setup lang="ts">
   import { ref, watch, onMounted } from "vue"
-  import { validPhone, uploadImage, postUserInfo } from "../lib/connect.ts"
-  import {
-    initProvince,
-    initCity,
-    initArea,
-    useCanvas,
-    loadImage,
-  } from "../lib/help.ts"
-  const emits = defineEmits<{
-    guide: []
-  }>()
-  const invalidKey = "aria-invalid"
+  import { useUserStore } from "../stores/userStore.ts"
+  import { validPhone } from "../lib/fetch/register.ts"
+  import { uploadImage } from "../lib/fetch/image.ts"
+  import { postUserInfo } from "../lib/fetch/userinfo.ts"
+  import { initProvince, initCity, initArea, loadImage } from "../lib/help.ts"
+  import { useCanvas } from "../lib/use.ts"
+  import imgURL from "../assets/vue.svg"
+  const userStore = useUserStore()
+  const { getGuide } = userStore
   let invalid = ref<Record<string, boolean>>({})
   let name = ref("")
   const checkName = () => {
     invalid.value["name"] = name.value === "" ? true : false
   }
-  let initial = await loadImage("./vue.svg")
+  let initial = await loadImage(imgURL)
   let canvas = ref<HTMLCanvasElement>()
   let image = await useCanvas(canvas, initial)
   let avatar = ref<File>()
@@ -38,7 +35,7 @@
   }
   const checkAvatar = async () => {
     const file = avatarInput.value?.files?.[0]
-    if (file && file.size < 102_400) {
+    if (file && file.size < 1_024_000) {
       avatar.value = file
       invalid.value["avatar"] = false
     } else {
@@ -55,9 +52,7 @@
   let provinceSelect = ref<HTMLSelectElement>()
   let citySelect = ref<HTMLSelectElement>()
   let areaSelect = ref<HTMLSelectElement>()
-  onMounted(() => {
-    initProvince(provinceSelect.value)
-  })
+  onMounted(() => initProvince(provinceSelect.value))
   const addCity = () => {
     initCity(provinceSelect.value, citySelect.value, areaSelect.value)
     area.value = "area"
@@ -78,38 +73,32 @@
     resetCode()
     invalid.value["phone"] = phoneRegex.test(phone.value) ? false : true
   }
-  let loading = ref(false)
-  let validCode: string
+  let validCode = ""
+  let disabled = ref(false)
   const sendCode = async () => {
     if (invalid.value["phone"] === false) {
-      loading.value = true
+      disabled.value = true
+      countDown()
       validCode = await validPhone(phone.value)
-      loading.value = false
-      if (validCode !== "") {
-        countDown()
-      }
     }
   }
-  let disabled = ref(false)
-  let buttonContent = ref("发送验证码")
+  let wait = ref(60)
   const countDown = () => {
-    let wait = 60
-    disabled.value = true
     const count = () => {
-      if (wait >= 0) {
-        buttonContent.value = wait + "秒后可重试"
-        wait -= 1
+      if (wait.value > 0) {
+        wait.value -= 1
         setTimeout(count, 1000)
       } else {
-        buttonContent.value = "发送验证码"
         disabled.value = false
+        wait.value = 60
       }
     }
     count()
   }
   let code = ref("")
   const checkCode = () => {
-    invalid.value["code"] = code.value === validCode ? false : true
+    invalid.value["code"] =
+      validCode !== "" && code.value === validCode ? false : true
   }
   const resetCode = () => {
     validCode = ""
@@ -133,10 +122,12 @@
     }
     return result
   }
+  let loading = ref(false)
   const submit = async () => {
     const result = check()
     if (result) {
-      let result = false
+      loading.value = true
+      let result
       const avatar = await getAvatar()
       const formData = new FormData()
       formData.append("avatar", avatar)
@@ -147,13 +138,14 @@
           avatar: fileName,
           id: id.value,
           location: area.value,
-          phone: phone.value,
+          phone: phone.value
         }
         result = await postUserInfo(userInfo)
       }
       if (result) {
-        emits("guide")
+        getGuide()
       }
+      loading.value = false
     }
   }
 </script>
@@ -168,10 +160,10 @@
         type="text"
         placeholder="请输入真实姓名"
         required
-        :[invalidKey]="invalid['name']"
+        :aria-invalid="invalid['name']"
         v-model.lazy="name"
         @change="checkName" />
-      <p><small v-show="invalid['name']">姓名格式有误</small></p>
+      <small v-show="invalid['name']">姓名格式有误</small>
       <label for="avatar">头像</label>
       <div class="grid">
         <div>
@@ -181,7 +173,7 @@
             accept="image/*"
             ref="avatarInput"
             @change="checkAvatar" />
-          <p><small v-show="invalid['avatar']">头像图片需小于100KB</small></p>
+          <small v-show="invalid['avatar']">头像图片需小于1MB</small>
         </div>
         <canvas
           id="canvas"
@@ -195,86 +187,89 @@
         type="text"
         placeholder="请输入身份证号"
         required
-        :[invalidKey]="invalid['id']"
+        :aria-invalid="invalid['id']"
         v-model.lazy="id"
         @change="checkID" />
-      <p><small v-show="invalid['id']">身份证号格式有误</small></p>
-      <fieldset>
-        <legend>居住地</legend>
-        <div class="grid">
-          <select
-            id="province"
-            :[invalidKey]="invalid['area']"
-            ref="provinceSelect"
-            @change="addCity">
-            <option
-              value="province"
-              selected>
-              省(直辖市)
-            </option>
-          </select>
-          <select
-            id="city"
-            :[invalidKey]="invalid['area']"
-            ref="citySelect"
-            @change="addArea">
-            <option
-              value="city"
-              selected>
-              市
-            </option>
-          </select>
-          <select
-            id="area"
-            :[invalidKey]="invalid['area']"
-            ref="areaSelect"
-            v-model.lazy="area"
-            @change="checkArea">
-            <option
-              value="area"
-              selected>
-              区(县)
-            </option>
-          </select>
-        </div>
-        <p><small v-show="invalid['area']">居住地未选择</small></p>
+      <small v-show="invalid['id']">身份证号格式有误</small>
+      <label for="location">居住地</label>
+      <fieldset role="group">
+        <select
+          id="province"
+          :aria-invalid="invalid['area']"
+          ref="provinceSelect"
+          @change="addCity">
+          <option
+            value="province"
+            selected>
+            省(直辖市)
+          </option>
+        </select>
+        <select
+          id="city"
+          :aria-invalid="invalid['area']"
+          ref="citySelect"
+          @change="addArea">
+          <option
+            value="city"
+            selected>
+            市
+          </option>
+        </select>
+        <select
+          id="area"
+          :aria-invalid="invalid['area']"
+          ref="areaSelect"
+          v-model.lazy="area"
+          @change="checkArea">
+          <option
+            value="area"
+            selected>
+            区(县)
+          </option>
+        </select>
       </fieldset>
+      <small v-show="invalid['area']">居住地未选择</small>
       <label for="phone">电话</label>
       <input
         id="phone"
         type="text"
         placeholder="请输入手机号码"
         required
-        :[invalidKey]="invalid['phone']"
+        :aria-invalid="invalid['phone']"
         v-model.lazy="phone"
         @change="checkPhone" />
-      <p><small v-show="invalid['phone']">手机号格式有误</small></p>
+      <small v-show="invalid['phone']">手机号格式有误</small>
       <label for="code">验证码</label>
-      <div class="grid">
+      <fieldset role="group">
         <input
           id="code"
           type="text"
           placeholder="请输入验证码"
           required
-          :[invalidKey]="invalid['code']"
+          :aria-invalid="invalid['code']"
           v-model.lazy="code"
           @change="checkCode" />
-        <button
+        <input
           type="button"
-          :aria-busy="loading"
+          :value="disabled ? `${wait}秒后可重试` : '发送验证码'"
           :disabled="disabled"
-          @click.prevent="sendCode">
-          {{ buttonContent }}
+          @click.prevent="sendCode" />
+      </fieldset>
+      <small v-show="invalid['code']">验证码有误</small>
+      <div class="button">
+        <button
+          :aria-busy="loading"
+          @click.prevent="submit">
+          完成
         </button>
       </div>
-      <p><small v-show="invalid['code']">验证码有误</small></p>
-      <button
-        type="submit"
-        @click.prevent="submit">
-        完成
-      </button>
     </article>
   </section>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+  }
+</style>

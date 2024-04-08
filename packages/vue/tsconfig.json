@@ -3,11 +3,6 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.vue",
-    "vite.env.d.ts"
-  ],
-  "compilerOptions": {
-    "types": [
-      "vite/client"
-    ]
-  }
+    "*.d.ts"
+  ]
 }

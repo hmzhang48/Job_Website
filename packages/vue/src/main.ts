@@ -1,7 +1,8 @@
 import { createApp } from "vue"
-import { createRouter, createWebHistory } from 'vue-router'
-import { createPinia } from 'pinia'
+import { createRouter, createWebHistory } from "vue-router"
+import { createPinia } from "pinia"
 import App from "./App.vue"
+import "./style.scss"
 import { userRoute } from "./routes/userRoute.ts"
 const pinia = createPinia()
 const app = createApp( App )

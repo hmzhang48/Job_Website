@@ -1,8 +1,10 @@
 <script setup lang="ts">
   import { ref, watch, inject } from "vue"
   import { storeToRefs } from "pinia"
-  import { validMail, existMail, resetMail, logout } from "../lib/connect.ts"
-  import { resetKey } from "../lib/help.ts"
+  import { validMail, existMail } from "../lib/fetch/register.ts"
+  import { resetMail } from "../lib/fetch/reset.ts"
+  import { logout } from "../lib/fetch/guide.ts"
+  import { resetKey } from "../lib/inject.ts"
   import { useUserStore } from "../stores/userStore.ts"
   import { useModalStore } from "../stores/modalStore.ts"
   const userStore = useUserStore()
@@ -11,69 +13,56 @@
   const { modalState } = storeToRefs(modalStore)
   const { showModel } = modalStore
   const reset = inject(resetKey, () => {})
-  const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let email = ref("")
   let tip = ref("")
-  let loading = ref(false)
   const emailRegex = new RegExp(/^\w+@\w+\.\w+$/, "g")
   const checkEmail = () => {
+    resetCode()
     if (emailRegex.test(email.value)) {
-      return true
+      invalid.value["email"] = false
     } else {
       tip.value = "电子邮件地址格式不正确"
       invalid.value["email"] = true
-      return false
     }
   }
-  let validCode: string | null
+  let disabled = ref(false)
+  let validCode = ""
   const sendCode = async () => {
-    if (checkEmail()) {
-      loading.value = true
+    checkEmail()
+    if (!invalid.value["email"]) {
+      disabled.value = true
+      countDown()
       let result = await existMail(email.value)
       if (result) {
         tip.value = "电子邮件地址已被注册"
         invalid.value["email"] = true
-        loading.value = false
       } else {
         invalid.value["email"] = false
         validCode = await validMail(email.value)
-        loading.value = false
-        if (validCode) {
-          countDown()
-        }
       }
     }
   }
-  let buttonContent = ref("发送验证码")
-  let disabled = ref(false)
+  let wait = ref(60)
   const countDown = () => {
-    let wait = 60
     disabled.value = true
     const count = () => {
-      if (wait >= 0) {
-        buttonContent.value = wait + "秒后可重试"
-        wait -= 1
+      if (wait.value > 0) {
+        wait.value -= 1
         setTimeout(count, 1000)
       } else {
-        buttonContent.value = "请先发送验证码"
         disabled.value = false
+        wait.value = 60
       }
     }
     count()
   }
   let code = ref("")
-  const checkCode = () => {
-    if (code.value === validCode) {
+  let loading = ref(false)
+  const checkCode = async () => {
+    if (validCode && code.value === validCode) {
       invalid.value["code"] = false
-      return true
-    } else {
-      invalid.value["code"] = true
-      return false
-    }
-  }
-  const submit = async () => {
-    if (checkCode()) {
+      loading.value = true
       let result = await resetMail(email.value)
       if (result) {
         showModel("邮箱地址修改成功,请重新登陆")
@@ -89,6 +78,16 @@
       } else {
         showModel("请重试")
       }
+      loading.value = true
+    } else {
+      invalid.value["code"] = true
+    }
+  }
+  const resetCode = () => {
+    validCode = ""
+    if (code.value !== "") {
+      code.value = ""
+      invalid.value["code"] = false
     }
   }
 </script>
@@ -101,35 +100,38 @@
       type="email"
       placeholder="请输入电子邮箱地址"
       required
-      :[invalidKey]="invalid['email']"
+      :aria-invalid="invalid['email']"
       v-model.lazy="email" />
-    <p>
-      <small v-show="invalid['email']">{{ tip }}</small>
-    </p>
+    <small v-show="invalid['email']">{{ tip }}</small>
     <label for="code">验证码</label>
-    <div class="grid">
+    <fieldset role="group">
       <input
         id="code"
         type="text"
         placeholder="请输入验证码"
         required
-        :[invalidKey]="invalid['code']"
+        :aria-invalid="invalid['code']"
         v-model.lazy="code" />
-      <button
+      <input
         type="button"
-        :aria-busy="loading"
+        :value="disabled ? wait + '秒后可重试' : '请先发送验证码'"
         :disabled="disabled"
-        @click.prevent="sendCode">
-        {{ buttonContent }}
+        @click.prevent="sendCode" />
+    </fieldset>
+    <small v-show="invalid['code']">验证码不正确</small>
+    <div class="button">
+      <button
+        :aria-busy="loading"
+        @click.prevent="checkCode">
+        确认
       </button>
     </div>
-    <p v-show="invalid['code']"><small>验证码不正确</small></p>
-    <button
-      type="submit"
-      @click.prevent="submit">
-      确认
-    </button>
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+  }
+</style>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from "vue"
-  import { finishJob, patchJob } from "../lib/connect.ts"
+  import { finishJob, patchJob } from "../lib/fetch/jobinfo.ts"
   import { initProvince, initCity, initArea } from "../lib/help.ts"
-  import type { jobItem, jobInfo } from "../lib/connect.ts"
+  import type { jobItem, jobInfo } from "../lib/interface.ts"
   import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
@@ -15,7 +15,6 @@
     finishJob: []
     patchJob: [jobInfo?: jobInfo]
   }>()
-  const invalidKey = "aria-invalid"
   let invalid = ref<Record<string, boolean>>({})
   let position = ref("")
   const checkPosition = () => {
@@ -203,114 +202,105 @@
       type="text"
       placeholder="职位名称"
       required
-      :[invalidKey]="invalid['position']"
+      :aria-invalid="invalid['position']"
       v-model="position"
       @change="checkPosition" />
-    <p><small v-show="invalid['position']">请填写职位名称</small></p>
+    <small v-show="invalid['position']">请填写职位名称</small>
     <label for="overview">职位介绍</label>
     <textarea
       id="overview"
-      rows="3"
+      rows="5"
       placeholder="职位介绍"
-      :[invalidKey]="invalid['overview']"
+      :aria-invalid="invalid['overview']"
       v-model="overview"
       @change="checkOverview">
     </textarea>
-    <p><small v-show="invalid['overview']">请填写职位介绍</small></p>
+    <small v-show="invalid['overview']">请填写职位介绍</small>
     <fieldset>
       <legend>职位性质</legend>
-      <div class="grid">
-        <label for="full-time">
-          <input
-            name="type"
-            id="full-time"
-            type="radio"
-            value="full-time"
-            :[invalidKey]="invalid['type']"
-            v-model="type"
-            @change="checkType" />
-          全职
-        </label>
-        <label for="part-time">
-          <input
-            name="type"
-            id="part-time"
-            type="radio"
-            value="part-time"
-            :[invalidKey]="invalid['type']"
-            v-model="type"
-            @change="checkType" />
-          兼职
-        </label>
-      </div>
-      <p><small v-show="invalid['type']">请选择职位性质</small></p>
+      <input
+        name="type"
+        id="full-time"
+        type="radio"
+        value="full-time"
+        :aria-invalid="invalid['type']"
+        v-model="type"
+        @change="checkType" />
+      <label for="full-time">全职</label>
+      <input
+        name="type"
+        id="part-time"
+        type="radio"
+        value="part-time"
+        :aria-invalid="invalid['type']"
+        v-model="type"
+        @change="checkType" />
+      <label for="part-time">兼职</label>
     </fieldset>
-    <fieldset>
-      <legend>{{ `职位薪资(${salaryType})` }}</legend>
-      <div class="grid">
-        <label for="minSalary">
-          <input
-            id="minSalary"
-            type="number"
-            placeholder="最低薪资"
-            :[invalidKey]="invalid['salary']"
-            v-model="minSalary"
-            @change="checkSalary" />
-        </label>
-        <label for="maxSalary">
-          <input
-            id="maxSalary"
-            type="number"
-            placeholder="最高薪资"
-            :[invalidKey]="invalid['salary']"
-            v-model="maxSalary"
-            @change="checkSalary" />
-        </label>
-      </div>
-      <p><small v-show="invalid['salary']">请填写职位薪资</small></p>
+    <small v-show="invalid['type']">请选择职位性质</small>
+    <label for="salary">{{ `薪资范围(${salaryType})` }}</label>
+    <fieldset role="group">
+      <input
+        id="minSalary"
+        type="number"
+        :aria-invalid="invalid['salary']"
+        v-model="minSalary"
+        @change="checkSalary" />
+      <input
+        id="maxSalary"
+        type="number"
+        :aria-invalid="invalid['salary']"
+        v-model="maxSalary"
+        @change="checkSalary" />
     </fieldset>
-    <fieldset>
-      <legend>工作地点</legend>
-      <div class="grid">
-        <select
-          id="province"
-          :[invalidKey]="invalid['location']"
-          ref="provinceSelect"
-          @change="addCity">
-          <option
-            value="province"
-            selected>
-            省(直辖市)
-          </option>
-        </select>
-        <select
-          id="city"
-          :[invalidKey]="invalid['location']"
-          ref="citySelect"
-          @change="addArea">
-          <option
-            value="city"
-            selected>
-            市
-          </option>
-        </select>
-        <select
-          id="area"
-          :[invalidKey]="invalid['location']"
-          ref="areaSelect"
-          v-model.lazy="location"
-          @change="checkLocation">
-          <option
-            value="area"
-            selected>
-            区(县)
-          </option>
-        </select>
-      </div>
-      <p><small v-show="invalid['location']">居住地未选择</small></p>
+    <small v-show="invalid['salary']">请填写薪资范围</small>
+    <label for="location">工作地点</label>
+    <fieldset role="group">
+      <select
+        id="province"
+        :aria-invalid="invalid['location']"
+        ref="provinceSelect"
+        @change="addCity">
+        <option
+          value="province"
+          selected>
+          省(直辖市)
+        </option>
+      </select>
+      <select
+        id="city"
+        :aria-invalid="invalid['location']"
+        ref="citySelect"
+        @change="addArea">
+        <option
+          value="city"
+          selected>
+          市
+        </option>
+      </select>
+      <select
+        id="area"
+        :aria-invalid="invalid['location']"
+        ref="areaSelect"
+        v-model.lazy="location"
+        @change="checkLocation">
+        <option
+          value="area"
+          selected>
+          区(县)
+        </option>
+      </select>
     </fieldset>
-    <button @click.prevent="submit">完成</button>
+    <small v-show="invalid['location']">居住地未选择</small>
+    <div class="button">
+      <button @click.prevent="submit">完成</button>
+    </div>
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  .button {
+    display: flex;
+    justify-content: center;
+  }
+</style>

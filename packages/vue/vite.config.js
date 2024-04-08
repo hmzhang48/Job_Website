@@ -6,9 +6,9 @@ export default defineConfig( {
       "/fastify": {
         target: "http://localhost:3000",
         changeOrigin: true,
-        rewrite: ( path ) => path.replace( /^\/fastify/, "" ),
-      },
-    },
+        rewrite: ( path ) => path.replace( /^\/fastify/, "" )
+      }
+    }
   },
-  plugins: [ vue() ],
+  plugins: [ vue() ]
 } )

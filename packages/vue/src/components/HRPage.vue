@@ -1,15 +1,12 @@
 <script setup lang="ts">
   import { computed, ref, inject, watch } from "vue"
   import { storeToRefs } from "pinia"
-  import { getJobList, deleteJob, receiveCV, removeCV } from "../lib/connect.ts"
-  import {
-    trueType,
-    trueLocation,
-    useObserver,
-    corpKey,
-    domain,
-  } from "../lib/help.ts"
-  import type { jobItem, jobInfo, cvItem } from "../lib/connect.ts"
+  import { getJobList, deleteJob } from "../lib/fetch/jobinfo.ts"
+  import { receiveCV, removeCV } from "../lib/fetch/cv.ts"
+  import { trueType, trueLocation } from "../lib/help.ts"
+  import { useObserver } from "../lib/use.ts"
+  import { corpKey } from "../lib/inject.ts"
+  import type { jobItem, jobInfo, cvItem } from "../lib/interface.ts"
   import SearchBar from "./SearchBar.vue"
   import JobInfo from "./JobInfo.vue"
   import JobList from "./JobList.vue"
@@ -24,9 +21,11 @@
   let corp = inject(corpKey)
   let keyword = ref("")
   const getKeyword = (k: string) => {
-    keyword.value = k
     newJob.value = false
-    restart()
+    if (keyword.value !== k) {
+      keyword.value = k
+      restart()
+    }
   }
   const limit = 2
   let offset = 0
@@ -37,21 +36,21 @@
   })
   let jobBox = ref<jobItem[]>([])
   const searchJobs = async () => {
-    let c: Partial<Omit<jobInfo, "overview">> & {
-      logo?: string
-      offset?: number
-    } = Object.create(null)
+    let c: Record<string, string | number> = Object.create(null)
     if (keyword.value) {
-      c.position = keyword.value
+      c["position"] = keyword.value
     }
-    c.offset = offset
+    c["offset"] = offset
+    c["limit"] = limit
     const jobList = await getJobList(c)
-    jobBox.value.push(...jobList)
-    if (jobList.length < limit) {
-      end.value = true
-      offset += jobList.length
-    } else {
-      offset = offset + limit
+    if (jobList) {
+      jobBox.value.push(...jobList)
+      if (jobList.length < limit) {
+        end.value = true
+        offset += jobList.length
+      } else {
+        offset = offset + limit
+      }
     }
   }
   const restart = () => {
@@ -62,11 +61,9 @@
   }
   let observed = ref<HTMLParagraphElement>()
   useObserver(observed, searchJobs, end)
-  let src = computed(() => {
-    return corp?.value["logo"]
-      ? `${domain}/fastify/image/${corp.value["logo"]}.png`
-      : ""
-  })
+  let src = computed(() =>
+    corp?.value["logo"] ? `/fastify/image/${corp.value["logo"]}.png` : ""
+  )
   let newJob = ref(false)
   const finishJob = () => {
     newJob.value = false
@@ -97,7 +94,7 @@
     }
   }
   const removeJob = async (no: number) => {
-    let result = false
+    let result
     if (corp) {
       result = await deleteJob(no, corp.value["corpID"])
     }
@@ -128,9 +125,9 @@
     action: string,
     cv: string,
     datetime?: string,
-    location?: string,
+    location?: string
   ) => {
-    let result = false
+    let result
     if (corp) {
       result = await removeCV(
         action,
@@ -138,7 +135,7 @@
         cv,
         corp.value["corpName"],
         datetime,
-        location,
+        location
       )
     }
     if (result) {
@@ -153,59 +150,123 @@
 </script>
 
 <template>
-  <div v-show="!hrMode">
-    <SearchBar
-      :hrState="hrState"
-      @search="getKeyword"
-      @newJob="newJob = true" />
-    <article>
-      <header>
-        <img :src="src" />
-        <span>{{ corp?.["corpName"] }}</span>
-      </header>
-      <p>{{ corp?.["brief"] }}</p>
-    </article>
+  <SearchBar
+    :hrState="hrState"
+    @search="getKeyword"
+    @newJob="newJob = true" />
+  <Transition
+    name="show"
+    mode="out-in">
+    <div
+      class="grid"
+      v-if="!newJob">
+      <Transition
+        name="show"
+        mode="out-in">
+        <div v-if="!hrMode">
+          <article>
+            <details>
+              <summary>
+                <img
+                  :src="src"
+                  align="left" />
+                <strong>{{ corp?.["corpName"] }}</strong>
+              </summary>
+              <p>{{ corp?.["brief"] }}</p>
+            </details>
+          </article>
+          <TransitionGroup name="list">
+            <template
+              v-for="job in jobBox"
+              :key="job.no">
+              <JobList
+                :hrState="hrState"
+                :corpName="job.corpInfo.corpName"
+                :logo="job.corpInfo.logo"
+                :position="job.position"
+                :no="job.no"
+                @updateJob="updateJob"
+                @removeJob="removeJob"
+                @getCV="getCV">
+                <template #summary>
+                  <p>
+                    <strong>{{ job.position }}</strong>
+                  </p>
+                  <ins>{{ trueType(job.type) }}</ins>
+                  <span>,&nbsp;</span>
+                  <ins>{{ job.salary }}</ins>
+                  <span>,&nbsp;</span>
+                  <ins>{{ trueLocation(job.location) }}</ins>
+                </template>
+                <template #overview>
+                  {{ job.overview }}
+                </template>
+              </JobList>
+            </template>
+          </TransitionGroup>
+          <p
+            class="tip"
+            ref="observed">
+            <small>{{ tip }}</small>
+          </p>
+        </div>
+        <div v-else>
+          <CVReview
+            :cv="cv"
+            @finishCV="finishCV" />
+        </div>
+      </Transition>
+      <div>
+        <CVList
+          :cvList="cvList"
+          @reviewCV="reviewCV" />
+      </div>
+    </div>
     <JobInfo
-      v-if="newJob"
+      v-else
       :no="no"
       :job="job"
       :corpID="corp?.['corpID'] ? corp['corpID'] : ''"
       @finishJob="finishJob"
       @patchJob="patchJob" />
-    <article v-show="!newJob">
-      <template
-        v-for="job in jobBox"
-        :key="job.no">
-        <JobList
-          :hrState="hrState"
-          :corpname="job.corpInfo.corpName"
-          :logo="job.corpInfo.logo"
-          :position="job.position"
-          :no="job.no"
-          @updateJob="updateJob"
-          @removeJob="removeJob"
-          @getCV="getCV">
-          <template #summary>
-            <h1>{{ job.position }}</h1>
-            <mark>{{ trueType(job.type) }}</mark>
-            <mark>{{ job.salary }}</mark>
-            <mark>{{ trueLocation(job.location) }}</mark>
-          </template>
-          <template #overview>
-            {{ job.overview }}
-          </template>
-        </JobList>
-      </template>
-      <p ref="observed">{{ tip }}</p>
-    </article>
-  </div>
-  <CVReview
-    v-if="hrMode"
-    :cv="cv"
-    @finishCV="finishCV" />
-  <CVList
-    :cvList="cvList"
-    @reviewCV="reviewCV" />
+  </Transition>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+  img {
+    height: 24px;
+    margin: 0 10px;
+  }
+  details {
+    margin-bottom: 0;
+  }
+  .grid {
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+  }
+  .tip {
+    text-align: center;
+  }
+  .list-move,
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+  .list-enter-from,
+  .list-leave-to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  .list-leave-active {
+    position: absolute;
+  }
+  .show-enter-active,
+  .show-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+  .show-enter-from,
+  .show-leave-to {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+</style>

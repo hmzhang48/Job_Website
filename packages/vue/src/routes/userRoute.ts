@@ -8,13 +8,13 @@ import InfoBox from "../components/InfoBox.vue"
 import HRpage from "../components/HRPage.vue"
 import HRSetting from "../components/HRSetting.vue"
 export const userRoute = [
-  { path: '/', component: RegisterEmail },
-  { path: '/login', component: LoginEmail },
-  { path: '/guideUser', component: GuideUser },
-  { path: '/guideHR', component: GuideHR },
-  { path: '/userPage', component: UserPage },
-  { path: '/userSetting/:tab', component: UserSetting, props: true },
-  { path: '/infoBox', component: InfoBox },
-  { path: '/hrPage', component: HRpage },
-  { path: '/hrSetting', component: HRSetting }
+  { path: "/", name: "index", component: RegisterEmail },
+  { path: "/login", name: "login", component: LoginEmail },
+  { path: "/guideUser", name: "guideUser", component: GuideUser },
+  { path: "/guideHR", name: "guideHR", component: GuideHR },
+  { path: "/userPage", name: "userPage", component: UserPage },
+  { path: "/userSetting/:tab", name: "userSetting", component: UserSetting, props: true },
+  { path: "/infoBox", name: "infoBox", component: InfoBox },
+  { path: "/hrPage", name: "hrPage", component: HRpage },
+  { path: "/hrSetting", name: "hrSetting", component: HRSetting }
 ]

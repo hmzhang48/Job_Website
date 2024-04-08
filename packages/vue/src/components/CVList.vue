@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { cvItem } from "../lib/connect.ts"
+  import type { cvItem } from "../lib/interface.ts"
   const props = defineProps<{
     cvList: cvItem[]
   }>()
@@ -10,7 +10,7 @@
 
 <template>
   <article>
-    <h1>待处理简历</h1>
+    <p><strong>待处理简历</strong></p>
     <div v-if="cvList.length > 0">
       <ul
         v-for="cv in props.cvList"
@@ -20,14 +20,14 @@
         </li>
       </ul>
     </div>
-    <p v-else>暂无待处理简历</p>
+    <p v-else><small>暂无待处理简历</small></p>
   </article>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
   article {
     position: sticky;
-    top: 0;
+    top: 125px;
     z-index: 1;
   }
 </style>

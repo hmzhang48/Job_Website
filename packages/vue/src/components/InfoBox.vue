@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, onMounted } from "vue"
-  import { getInfoBox, changeInfoBox } from "../lib/connect.ts"
-  import type { infoItem } from "../lib/connect.ts"
+  import { getInfoBox, changeInfoBox } from "../lib/fetch/infobox.ts"
+  import type { infoItem } from "../lib/interface.ts"
   import { useModalStore } from "../stores/modalStore.ts"
   const modalStore = useModalStore()
   const { showModel } = modalStore
@@ -9,17 +9,18 @@
   const limit = 2
   let offset = 0
   const getInfo = async () => {
-    let infoList = await getInfoBox(offset)
-    infoBox.value.push(...infoList)
-    if (infoList.length < limit) {
-      end.value = true
-      offset += infoList.length
+    let infoList = await getInfoBox(offset, limit)
+    if (infoList) {
+      infoBox.value.push(...infoList)
+      if (infoList.length < limit) {
+        end.value = true
+        offset += infoList.length
+      }
+      offset += limit
     }
-    offset += limit
   }
-  onMounted(() => {
-    getInfo()
-  })
+  onMounted(() => getInfo())
+
   let end = ref(false)
   const changeItem = async (no: number, action: string) => {
     let result = await changeInfoBox(no, action)
@@ -79,4 +80,4 @@
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

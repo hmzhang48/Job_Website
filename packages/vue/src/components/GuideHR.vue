@@ -13,34 +13,26 @@
       confirmState.value = false
     }
   })
-  const emits = defineEmits<{
-    guide: []
-  }>()
+  const message = "该公司不在数据库中, 请先完善相关数据"
   let show = ref(true)
   let exist = ref(false)
-  let hrID = ref("")
-  let corpID = ref("")
-  const corpInfo = (hr_id: string, corp_id: string) => {
-    hrID.value = hr_id
-    corpID.value = corp_id
-    showModel("该公司不在数据库中, 请先完善相关数据", true)
-  }
-  const hrInfo = () => {
-    exist.value = true
-  }
+  let id = ref({
+    hrID: "",
+    corpID: ""
+  })
 </script>
 
 <template>
   <HRInfo
     v-show="show"
+    v-model="id"
     :exist="exist"
-    @corpInfo="corpInfo"
-    @hrInfo="emits('guide')" />
+    @modal="showModel(message, true)" />
   <CorpInfo
     v-if="!show"
-    :hrID="hrID"
-    :corpID="corpID"
-    @corpInfo="hrInfo" />
+    :hrID="id.hrID"
+    :corpID="id.corpID"
+    @exist="() => (exist = true)" />
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

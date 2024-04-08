@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from "vue"
-  import { domain } from "../lib/help.ts"
   const props = defineProps<{
     cv: string
   }>()
@@ -8,7 +7,7 @@
     finishCV: [action: string, cv: string, datetime?: string, location?: string]
   }>()
   let embed = ref<HTMLEmbedElement>()
-  let src = computed(() => `${domain}/fastify/pdf/${props.cv}.pdf`)
+  let src = computed(() => `/fastify/pdf/${props.cv}.pdf`)
   onMounted(() => {
     if (embed.value) {
       embed.value.src = src.value
@@ -47,7 +46,7 @@
         action,
         props.cv,
         `${date.value}-${time.value}`,
-        location.value,
+        location.value
       )
     }
     if (action === "refuse") {
@@ -100,4 +99,4 @@
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

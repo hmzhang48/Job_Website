@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ref, inject } from "vue"
-  import { hrListKey } from "../lib/help.ts"
+  import { hrListKey } from "../lib/inject.ts"
   let hrs = inject(hrListKey)
   let verify = ref(false)
 </script>
@@ -8,7 +8,6 @@
 <template>
   <aside>
     <article>
-      <p>个人信息</p>
       <nav>
         <ul>
           <li @click.prevent="verify = false">HR管理</li>
@@ -30,4 +29,4 @@
   </article>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

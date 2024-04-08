@@ -1,22 +1,24 @@
 <script setup lang="ts">
-  import { ref, watch, onMounted, provide } from "vue"
-  import type { Ref } from "vue"
-  import { useRouter, RouterView } from "vue-router"
+  import { ref, watch, onMounted, onUnmounted, provide } from "vue"
+  import { useRouter, useRoute } from "vue-router"
   import { storeToRefs } from "pinia"
-  import { getUserInfo, getHRInfo, getCorpInfo } from "./lib/connect.ts"
+  import { getUserInfo } from "./lib/fetch/userinfo.ts"
+  import { getHRInfo } from "./lib/fetch/hrinfo.ts"
+  import { getCorpInfo } from "./lib/fetch/corpinfo.ts"
   import {
     infoKey,
     corpKey,
     hrListKey,
     updateKey,
-    resetKey,
-  } from "./lib/help.ts"
+    resetKey
+  } from "./lib/inject.ts"
   import TitleNav from "./components/TitleNav.vue"
   import InfoModal from "./components/InfoModal.vue"
   import { useUserStore } from "./stores/userStore.ts"
   import { useModalStore } from "./stores/modalStore.ts"
   import { useValidStore } from "./stores/validStore.ts"
   const router = useRouter()
+  const route = useRoute()
   const userStore = useUserStore()
   const modalStore = useModalStore()
   const validStore = useValidStore()
@@ -27,79 +29,94 @@
   router.beforeEach((to) =>
     !userState.value && to.path !== "/" && to.path !== "/login"
       ? { path: "/" }
-      : true,
+      : true
   )
+  let infoEvent: EventSource
+  let newInfo = ref(0)
   onMounted(async () => getGuide())
-  watch(userState, () => stateCheck())
+  onUnmounted(() => infoEvent.close())
+  watch([userState, hrState, guideState], () => {
+    stateCheck()
+    if (userState.value) {
+      if (!infoEvent) {
+        infoEvent = new EventSource("/fastify/infobox-push", {
+          withCredentials: true
+        })
+        infoEvent.addEventListener("newInfo", async () => newInfo.value++)
+      }
+    } else {
+      if (infoEvent) {
+        infoEvent.close()
+        newInfo.value = 0
+      }
+    }
+  })
   const start = (buttonState: number) => {
     if (buttonState) {
-      router.push({
-        path: "/",
-      })
+      router.push({ name: "index" })
     } else {
-      router.push({
-        path: "/login",
-      })
+      router.push({ name: "login" })
+    }
+  }
+  const updateInfo = () => {
+    if (route.name === "infoBox") {
+      router.go(0)
+    } else {
+      router.push({ name: "infoBox" })
     }
   }
   let info = ref<Record<string, string>>({})
   let corp = ref<Record<string, string>>({})
-  let hrList: Ref<{ name: string; hrID: string }[]> = ref([])
+  let hrList = ref<{ name: string; hrID: string }[]>([])
   const stateCheck = async () => {
     if (userState.value) {
       if (guideState.value) {
         if (hrState.value) {
-          router.push({
-            path: "/guideHR",
-          })
+          router.push({ name: "guideHR" })
         } else {
-          router.push({
-            path: "/guideUser",
-          })
+          router.push({ name: "guideUser" })
         }
       } else {
         if (hrState.value) {
-          router.push({
-            path: "/HRPage",
-          })
+          router.push({ name: "hrPage" })
           const hrInfo = await getHRInfo()
           const corpInfo = await getCorpInfo()
-          info.value["name"] = hrInfo.name
-          info.value["avatar"] = hrInfo.avatar
-          info.value["id"] = hrInfo.hrID
-          info.value["phone"] = hrInfo.phone
-          corp.value["corpID"] = hrInfo.corpID
-          corp.value["corpName"] = corpInfo.info.corpName
-          corp.value["logo"] = corpInfo.info.logo
-          corp.value["brief"] = corpInfo.info.brief
-          validState.value = corpInfo.info.valid ?? false
-          if (corpInfo.list) {
-            chiefState.value = true
-            hrList.value = corpInfo.list
-          } else {
-            chiefState.value = false
+          if (hrInfo && corpInfo) {
+            info.value["name"] = hrInfo.name
+            info.value["avatar"] = hrInfo.avatar
+            info.value["id"] = hrInfo.hrID
+            info.value["phone"] = hrInfo.phone
+            corp.value["corpID"] = hrInfo.corpID
+            corp.value["corpName"] = corpInfo.info.corpName
+            corp.value["logo"] = corpInfo.info.logo
+            corp.value["brief"] = corpInfo.info.brief
+            validState.value = corpInfo.info.valid ?? false
+            if (corpInfo.list) {
+              chiefState.value = true
+              hrList.value = corpInfo.list
+            } else {
+              chiefState.value = false
+            }
           }
         } else {
-          router.push({
-            path: "/UserPage",
-          })
+          router.push({ name: "userPage" })
           const userInfo = await getUserInfo()
-          info.value["name"] = userInfo.name
-          info.value["avatar"] = userInfo.avatar
-          info.value["id"] = userInfo.id
-          info.value["phone"] = userInfo.phone
-          info.value["location"] = userInfo.location
-          if (userInfo.cv) {
-            cvState.value = true
-            info.value["cv"] = userInfo.cv
+          if (userInfo) {
+            info.value["name"] = userInfo.name
+            info.value["avatar"] = userInfo.avatar
+            info.value["id"] = userInfo.id
+            info.value["phone"] = userInfo.phone
+            info.value["location"] = userInfo.location
+            if (userInfo.cv) {
+              cvState.value = true
+              info.value["cv"] = userInfo.cv
+            }
+            validState.value = userInfo.valid
           }
-          validState.value = userInfo.valid
         }
       }
     } else {
-      router.push({
-        path: "/",
-      })
+      router.push({ name: "index" })
     }
   }
   provide(infoKey, info)
@@ -119,20 +136,36 @@
   <div class="container">
     <TitleNav
       :avatar="info['avatar']"
-      @start="start">
+      :newInfo="newInfo"
+      @start="start"
+      @updateInfo="updateInfo">
       {{ info["name"] }}
     </TitleNav>
     <Teleport to="body">
       <InfoModal>{{ message }}</InfoModal>
     </Teleport>
-    <Suspense timeout="10">
-      <template #default>
-        <RouterView
-          @login="() => getGuide()"
-          @register="() => getGuide()"
-          @guide="() => (guideState = false)" />
-      </template>
+    <Suspense>
+      <router-view v-slot="{ Component }">
+        <transition
+          name="show"
+          mode="out-in"
+          appear>
+          <component :is="Component" />
+        </transition>
+      </router-view>
       <template #fallback>Loading...</template>
     </Suspense>
   </div>
 </template>
+
+<style scoped lang="scss">
+  .show-enter-active,
+  .show-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+  .show-enter-from,
+  .show-leave-to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+</style>

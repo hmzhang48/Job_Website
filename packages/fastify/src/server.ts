@@ -1,21 +1,20 @@
 import fastify from "fastify"
 import sensible from "@fastify/sensible"
 import helmet from "@fastify/helmet"
-import autoLoad from '@fastify/autoload'
+import autoLoad from "@fastify/autoload"
 import jwt from "@fastify/jwt"
 import cookie from "@fastify/cookie"
 import staticfile from "@fastify/static"
 import multipart from "@fastify/multipart"
 import websocket from "@fastify/websocket"
 import path from "node:path"
-import url from 'node:url'
+import url from "node:url"
 const server = fastify( {
-  http2: true,
   ajv: {
     customOptions: {
       strict: "log",
-      keywords: [ "kind", "modifier" ],
-    },
+      keywords: [ "kind", "modifier" ]
+    }
   },
   logger: {
     level: "info",
@@ -25,36 +24,36 @@ const server = fastify( {
         levelFirst: true,
         translateTime: true,
         colorize: true,
-        ignore: "pid,hostname",
-      },
-    },
-  },
+        ignore: "pid,hostname"
+      }
+    }
+  }
 } )
 server.register( sensible )
 server.register( helmet )
 server.register( autoLoad, {
-  dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), 'plugins' ),
+  dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), "plugins" ),
   forceESM: true
 } )
 server.register( jwt, {
   secret: "secret",
   cookie: {
-    cookieName: 'jwt',
+    cookieName: "jwt",
     signed: true
   },
   formatUser: ( payload ) => {
-    return JSON.parse( payload )
+    return JSON.parse( payload.data )
   }
 } )
 server.register( cookie, {
-  secret: "secret",
+  secret: "secret"
 } )
 server.register( staticfile, {
-  root: path.resolve( "./public" ),
+  root: path.resolve( "./public" )
 } )
 server.register( multipart, {
   limits: {
-    fileSize: 1_048_576,
+    fileSize: 1_048_576
   }
 } )
 server.register( websocket, {
