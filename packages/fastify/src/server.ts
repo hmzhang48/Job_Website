@@ -1,64 +1,61 @@
-import fastify from "fastify"
-import sensible from "@fastify/sensible"
-import helmet from "@fastify/helmet"
-import autoLoad from "@fastify/autoload"
-import jwt from "@fastify/jwt"
-import cookie from "@fastify/cookie"
-import staticfile from "@fastify/static"
-import multipart from "@fastify/multipart"
-import websocket from "@fastify/websocket"
-import path from "node:path"
-import url from "node:url"
-const server = fastify( {
+import fastify from 'fastify'
+import sensible from '@fastify/sensible'
+import helmet from '@fastify/helmet'
+import autoLoad from '@fastify/autoload'
+import jwt from '@fastify/jwt'
+import cookie from '@fastify/cookie'
+import staticfile from '@fastify/static'
+import multipart from '@fastify/multipart'
+import websocket from '@fastify/websocket'
+import path from 'node:path'
+import url from 'node:url'
+const server = fastify({
   ajv: {
     customOptions: {
-      strict: "log",
-      keywords: [ "kind", "modifier" ]
-    }
+      strict: 'log',
+      keywords: ['kind', 'modifier'],
+    },
   },
   logger: {
-    level: "info",
+    level: 'info',
     transport: {
-      target: "pino-pretty",
+      target: 'pino-pretty',
       options: {
         levelFirst: true,
         translateTime: true,
         colorize: true,
-        ignore: "pid,hostname"
-      }
-    }
-  }
-} )
-server.register( sensible )
-server.register( helmet )
-server.register( autoLoad, {
-  dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), "plugins" ),
-  forceESM: true
-} )
-server.register( jwt, {
-  secret: "secret",
-  cookie: {
-    cookieName: "jwt",
-    signed: true
+        ignore: 'pid,hostname',
+      },
+    },
   },
-  formatUser: ( payload ) => {
-    return JSON.parse( payload.data )
-  }
-} )
-server.register( cookie, {
-  secret: "secret"
-} )
-server.register( staticfile, {
-  root: path.resolve( "./public" )
-} )
-server.register( multipart, {
+})
+void server.register(sensible)
+void server.register(helmet)
+void server.register(autoLoad, {
+  dir: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'plugins'),
+  forceESM: true,
+})
+void server.register(jwt, {
+  secret: 'secret',
+  cookie: {
+    cookieName: 'jwt',
+    signed: true,
+  },
+})
+void server.register(cookie, {
+  secret: 'secret',
+})
+void server.register(staticfile, {
+  root: path.resolve('./public'),
+})
+void server.register(multipart, {
   limits: {
-    fileSize: 1_048_576
-  }
-} )
-server.register( websocket, {
+    fileSize: 1_048_576,
+  },
+})
+void server.register(websocket, {
   options: {
-    maxPayload: 1_048_576
-  }
-} )
+    maxPayload: 1_048_576,
+  },
+})
 export default server

@@ -1,18 +1,27 @@
 import eslint from '@eslint/js'
 import tslint from 'typescript-eslint'
+import stylelint from "@stylistic/eslint-plugin"
 import unicorn from 'eslint-plugin-unicorn'
 import vue from 'eslint-plugin-vue'
 export default tslint.config(
   eslint.configs.recommended,
-  ...tslint.configs.recommended,
+  unicorn.configs[ 'flat/recommended' ],
+  ...tslint.configs.recommendedTypeChecked,
+  ...tslint.configs.stylisticTypeChecked,
+  stylelint.configs[ 'recommended-flat' ],
+  ...vue.configs[ 'flat/recommended' ],
   {
     languageOptions: {
       parserOptions: {
+        parser: tslint.parser,
         project: true,
-        tsconfigRootDir: import.meta.dirname
+        extraFileExtensions: [ ".vue" ],
+        sourceType: "module"
       }
+    },
+    rules: {
+      "unicorn/filename-case": "off",
+      "unicorn/prevent-abbreviations": "off"
     }
-  },
-  unicorn.configs[ 'flat/recommended' ],
-  ...vue.configs[ 'flat/recommended' ]
+  }
 )

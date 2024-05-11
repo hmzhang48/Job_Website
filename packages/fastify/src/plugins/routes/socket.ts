@@ -1,12 +1,13 @@
-import type { FastifyPluginAsync } from "fastify"
-import fp from "fastify-plugin"
-const socket: FastifyPluginAsync = fp( async ( f ) => {
-  f.get( "/ws", { websocket: true }, async ( connection ) => {
-    connection.socket.addEventListener( "message", ( message ) => {
-      if ( typeof message === "string" ) {
-        connection.socket.send( "message received" )
+import type { FastifyPluginCallback } from 'fastify'
+import fp from 'fastify-plugin'
+const socket: FastifyPluginCallback = fp((f, _, done) => {
+  f.get('/ws', { websocket: true }, (socket) => {
+    socket.on('message', (message) => {
+      if (typeof message === 'string') {
+        socket.send('message received')
       }
-    } )
-  } )
-} )
+    })
+  })
+  done()
+})
 export default socket

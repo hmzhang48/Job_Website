@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS "jobinfo" (
 	"location" text NOT NULL,
 	"corpid" text NOT NULL,
 	"no" serial NOT NULL,
-	"cvlist" text[]
+	"cvlist" text[] DEFAULT '{}' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "userinfo" (

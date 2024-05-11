@@ -15,13 +15,13 @@ export interface userInfo extends info {
   valid: boolean
 }
 export interface hrInfo extends info {
-  hrID: string
-  corpID: string
+  hrId: string
+  corpId: string
 }
 export interface corpInfo {
   corpName: string
   logo: string
-  corpID: string
+  corpId: string
   brief: string
   chiefHR: string
 }

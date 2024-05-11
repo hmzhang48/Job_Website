@@ -1,169 +1,158 @@
-import type { FastifyPluginAsync } from "fastify"
-import fp from "fastify-plugin"
-import type { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts"
-import type { JSONSchema } from "json-schema-to-ts"
-import { eq } from "drizzle-orm"
-import type { InferInsertModel } from "drizzle-orm"
-import { userInfo } from "../../lib/schema.ts"
-const idPattern = "^\\d{17}[0-9Xx]$"
-const userinfo: FastifyPluginAsync = fp( async ( f ) => {
+import type { FastifyPluginCallback } from 'fastify'
+import fp from 'fastify-plugin'
+import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
+import type { JSONSchema } from 'json-schema-to-ts'
+import { eq } from 'drizzle-orm'
+import type { InferInsertModel } from 'drizzle-orm'
+import { userInfo } from '../../lib/schema.ts'
+const idPattern = '^\\d{17}[0-9Xx]$'
+const userinfo: FastifyPluginCallback = fp((f, _, done) => {
   const server = f.withTypeProvider<JsonSchemaToTsProvider>()
   server.get(
-    "/userinfo",
+    '/userinfo',
     {
       schema: {
         response: {
           200: {
-            type: "object",
+            type: 'object',
             properties: {
               info: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  name: { type: "string" },
+                  name: { type: 'string' },
                   id: {
-                    type: "string",
-                    pattern: idPattern
+                    type: 'string',
+                    pattern: idPattern,
                   },
                   location: {
-                    type: "string",
-                    pattern: "^\\d{6}$"
+                    type: 'string',
+                    pattern: '^\\d{6}$',
                   },
                   phone: {
-                    type: "string",
-                    pattern: "^\\d{11}$"
+                    type: 'string',
+                    pattern: '^\\d{11}$',
                   },
-                  avatar: { type: "string" },
-                  cv: { type: "string" },
-                  valid: { type: "boolean" }
+                  avatar: { type: 'string' },
+                  cv: { type: 'string' },
+                  valid: { type: 'boolean' },
                 },
                 required: [
-                  "name",
-                  "id",
-                  "location",
-                  "phone",
-                  "avatar",
-                  "cv",
-                  "valid"
+                  'name', 'id', 'location', 'phone', 'avatar', 'cv', 'valid',
                 ],
-                additionalProperties: false
-              }
+                additionalProperties: false,
+              },
             },
-            required: [ "info" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
+            required: ['info'],
+            additionalProperties: false,
+          } as const satisfies JSONSchema,
+        },
+      },
     },
-    async ( request, reply ) => {
+    async (request, reply) => {
       const info = await server.drizzle.query.userInfo
-        .findFirst( {
+        .findFirst({
           columns: { uuid: false },
-          where: eq( userInfo.uuid, request.user.uuid )
-        } ).catch( ( error ) => server.log.error( error ) )
-      if ( info ) {
-        reply.send( { info: info } )
-      } else {
-        reply.code( 404 ).send()
-      }
-    }
+          where: eq(userInfo.uuid, request.user.uuid),
+        })
+        .catch(error => server.log.error(error))
+      void (info ? reply.send({ info: info }) : reply.code(404).send())
+    },
   )
   server.post(
-    "/userinfo",
+    '/userinfo',
     {
       schema: {
         body: {
-          type: "object",
+          type: 'object',
           properties: {
-            name: { type: "string" },
+            name: { type: 'string' },
             id: {
-              type: "string",
-              pattern: idPattern
+              type: 'string',
+              pattern: idPattern,
             },
             location: {
-              type: "string",
-              pattern: "^\\d{6}$"
+              type: 'string',
+              pattern: '^\\d{6}$',
             },
             phone: {
-              type: "string",
-              pattern: "^\\d{11}$"
+              type: 'string',
+              pattern: '^\\d{11}$',
             },
-            avatar: { type: "string" }
+            avatar: { type: 'string' },
           },
-          required: [ "name", "id", "location", "phone", "avatar" ],
-          additionalProperties: false
+          required: ['name', 'id', 'location', 'phone', 'avatar'],
+          additionalProperties: false,
         } as const satisfies JSONSchema,
         response: {
           200: {
-            type: "object",
-            properties: { result: { type: "boolean" } },
-            required: [ "result" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
+            type: 'object',
+            properties: { result: { type: 'boolean' } },
+            required: ['result'],
+            additionalProperties: false,
+          } as const satisfies JSONSchema,
+        },
+      },
     },
-    async ( request, reply ) => {
-      const source: InferInsertModel<typeof userInfo> = Object.create( null )
+    async (request, reply) => {
+      const source = Object.create(null) as InferInsertModel<typeof userInfo>
       source.uuid = request.user.uuid
-      source.name = request.body.name
-      source.id = request.body.id
-      source.location = request.body.location
-      source.phone = request.body.phone
-      source.avatar = request.body.avatar
+      Object.assign(source, request.body)
       const result = await server.drizzle
-        .insert( userInfo ).values( source )
-        .then( () => true )
-        .catch( ( error ) => server.log.error( error ) )
-      reply.send( { result: !!result } )
-    }
+        .insert(userInfo).values(source)
+        .then(() => true)
+        .catch(error => server.log.error(error))
+      void reply.send({ result: !!result })
+    },
   )
   server.patch(
-    "/userinfo",
+    '/userinfo',
     {
       schema: {
         body: {
-          type: "object",
+          type: 'object',
           properties: {
             location: {
-              type: "string",
-              pattern: "^\\d{6}$"
+              type: 'string',
+              pattern: '^\\d{6}$',
             },
             phone: {
-              type: "string",
-              pattern: "^\\d{11}$"
-            }
+              type: 'string',
+              pattern: '^\\d{11}$',
+            },
           },
-          additionalProperties: false
+          additionalProperties: false,
         } as const satisfies JSONSchema,
         response: {
           200: {
-            type: "object",
-            properties: { result: { type: "boolean" } },
-            required: [ "result" ],
-            additionalProperties: false
-          } as const satisfies JSONSchema
-        }
-      }
+            type: 'object',
+            properties: { result: { type: 'boolean' } },
+            required: ['result'],
+            additionalProperties: false,
+          } as const satisfies JSONSchema,
+        },
+      },
     },
-    async ( request, reply ) => {
-      const source: { location?: string; phone?: string } = Object.create( null )
-      if ( request.body.location ) {
+    async (request, reply) => {
+      const source = Object.create(null) as { location?: string, phone?: string }
+      if (request.body.location) {
         source.location = request.body.location
       }
-      if ( request.body.phone ) {
+      if (request.body.phone) {
         source.phone = request.body.phone
       }
-      if ( Object.keys( source ).length > 0 ) {
+      if (Object.keys(source).length > 0) {
         const result = await server.drizzle
-          .update( userInfo ).set( source )
-          .where( eq( userInfo.uuid, request.user.uuid ) )
-          .then( () => true )
-          .catch( ( error ) => server.log.error( error ) )
-        reply.send( { result: !!result } )
-      } else {
-        reply.code( 400 ).send()
+          .update(userInfo).set(source)
+          .where(eq(userInfo.uuid, request.user.uuid))
+          .then(() => true)
+          .catch(error => server.log.error(error))
+        void reply.send({ result: !!result })
       }
-    }
+      else {
+        void reply.code(400).send()
+      }
+    },
   )
-} )
+  done()
+})
 export default userinfo

@@ -1,5 +1,5 @@
 {
-  "id": "a7ac5a8b-ad1b-4d03-80ec-87a31fe2e1af",
+  "id": "3cf4d081-1826-41be-b651-8b3f58ec9bc6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -253,7 +253,8 @@
           "name": "cvlist",
           "type": "text[]",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'{}'"
         }
       },
       "indexes": {},
