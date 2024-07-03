@@ -12,7 +12,7 @@ const { cvState } = storeToRefs(validStore)
 let info = inject(infoKey)
 let update = inject(updateKey, () => ({}))
 let src = computed(() =>
-  info?.value['cv'] ? `/fastify/PDF/${info.value['cv']}.pdf` : '',
+  info?.value['cv'] ? `/PDF/${info.value['cv']}.pdf` : '',
 )
 let embed = ref<HTMLEmbedElement>()
 onMounted(() => {

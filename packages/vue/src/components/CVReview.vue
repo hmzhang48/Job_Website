@@ -7,7 +7,7 @@ const emits = defineEmits<{
   finishCv: [action: string, cv: string, datetime?: string, location?: string]
 }>()
 let embed = ref<HTMLEmbedElement>()
-let src = computed(() => `/fastify/pdf/${props.cv}.pdf`)
+let src = computed(() => `/pdf/${props.cv}.pdf`)
 onMounted(() => {
   if (embed.value) {
     embed.value.src = src.value

@@ -1,16 +1,16 @@
 import { cvItem } from '../interface.ts'
 export const uploadCv = async (formData: FormData) =>
-  fetch('/fastify/cv',
+  fetch('/cv',
     { method: 'POST', credentials: 'include', body: formData })
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: string } | undefined) => value?.result)
 export const deliverCv = async (no: number) =>
-  fetch(`/fastify/cv-deliver?no=${no.toString()}`,
+  fetch(`/cv-deliver?no=${no.toString()}`,
     { method: 'GET', credentials: 'include' })
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const receiveCv = async (no: number) =>
-  fetch(`/fastify/cv-receive?no=${no.toString()}`,
+  fetch(`/cv-receive?no=${no.toString()}`,
     { method: 'GET', credentials: 'include' })
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { list: cvItem[] } | undefined) => value?.list)
@@ -33,7 +33,7 @@ export const removeCv = async (
   else {
     return false
   }
-  return fetch(`/fastify/cv-remove/${action}`,
+  return fetch(`/cv-remove/${action}`,
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

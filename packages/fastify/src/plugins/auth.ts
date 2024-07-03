@@ -14,12 +14,30 @@ declare module '@fastify/jwt' {
 }
 const urlList = new Set([
   '/email-check', '/email-validate', '/phone-validate',
-  '/register', '/login',
+  '/register', '/login'
 ])
-const fileList = new Set(['png', 'pdf'])
+const fileList = new Set([
+  ".html", ".css", ".js", ".json", ".png", ".svg", ".ico", ".pdf"
+])
+const urlCheck = (url: string) => {
+  if (url === "/") {
+    return false
+  }
+  for (const u of urlList) {
+    if (url.startsWith(u)) {
+      return false
+    }
+  }
+  for (const f of fileList) {
+    if (url.endsWith(f)) {
+      return false
+    }
+  }
+  return true
+}
 const auth: FastifyPluginCallback = fp((f, _, done) => {
   f.addHook('preValidation', async (request, reply) => {
-    if (!urlList.has(request.url.split('?')[0]) && !fileList.has(request.url.slice(-3))) {
+    if (urlCheck(request.url)) {
       try {
         await request.jwtVerify()
       }

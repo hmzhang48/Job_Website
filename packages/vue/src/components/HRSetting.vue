@@ -32,7 +32,7 @@ let verify = ref(false)
           :key="hr.hrId"
         >
           <div class="list">
-            <img :src="`/fastify/image/${hr.avatar}.png`">
+            <img :src="`/image/${hr.avatar}.png`">
             <div>
               <span>姓名：{{ hr.name }}</span>
               <br>

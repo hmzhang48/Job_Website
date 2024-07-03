@@ -1,5 +1,5 @@
 export const resetMail = async (email: string) =>
-  fetch('/fastify/email-reset',
+  fetch('/email-reset',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -9,7 +9,7 @@ export const resetMail = async (email: string) =>
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const resetPassword = async (oldPassword: string, newPassword: string) =>
-  fetch('/fastify/password-reset',
+  fetch('/password-reset',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },

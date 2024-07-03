@@ -10,7 +10,7 @@ const { showModel } = modalStore
 let info = inject(infoKey)
 let update = inject(updateKey, () => ({}))
 let src = computed(() =>
-  info?.value['avatar'] ? `/fastify/image/${info.value['avatar']}.png` : '',
+  info?.value['avatar'] ? `/image/${info.value['avatar']}.png` : '',
 )
 let origin = await loadImage(src.value)
 let canvas = ref<HTMLCanvasElement>()

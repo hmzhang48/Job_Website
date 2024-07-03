@@ -33,7 +33,7 @@ watch([userState, hrState, guideState], async () => {
   await stateCheck()
   if (userState.value && !guideState.value) {
     if (!event) {
-      event = new EventSource('/fastify/sse', {
+      event = new EventSource('/sse', {
         withCredentials: true,
       })
       event.addEventListener('newInfo', () => newInfo.value++)

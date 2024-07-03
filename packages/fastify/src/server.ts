@@ -46,7 +46,10 @@ void server.register(cookie, {
   secret: 'secret',
 })
 void server.register(staticfile, {
-  root: path.resolve('./public'),
+  root: [
+    path.resolve('./public'),
+    path.resolve('./client')
+  ]
 })
 void server.register(multipart, {
   limits: {
@@ -57,5 +60,8 @@ void server.register(websocket, {
   options: {
     maxPayload: 1_048_576,
   },
+})
+server.get("/", async (_, reply)=>{
+  reply.redirect("/index.html")
 })
 export default server

@@ -20,7 +20,7 @@ const emits = defineEmits<{
 }>()
 watch(userState, () => (buttonState.value = userState.value ? 2 : 0))
 let src = computed(() =>
-  props.avatar ? `/fastify/image/${props.avatar}.png` : '',
+  props.avatar ? `/image/${props.avatar}.png` : '',
 )
 let buttonState = ref(0)
 const changeState = async () => {

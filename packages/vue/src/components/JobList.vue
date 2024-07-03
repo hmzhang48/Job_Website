@@ -13,7 +13,7 @@ const emits = defineEmits<{
   sendCv: [no: number]
   getCv: [no: number]
 }>()
-let src = computed(() => `/fastify/image/${props.logo}.png`)
+let src = computed(() => `/image/${props.logo}.png`)
 </script>
 
 <template>

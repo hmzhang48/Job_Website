@@ -1,6 +1,6 @@
 import { jobInfo, jobItem } from '../interface.ts'
 export const getJobList = async (c: Record<string, string | number>) => {
-  let url = '/fastify/jobinfo?'
+  let url = '/jobinfo?'
   for (const [key, value] of Object.entries(c)) {
     url += `${key}=${value}&`
   }
@@ -23,7 +23,7 @@ export const getJobList = async (c: Record<string, string | number>) => {
     })
 }
 export const finishJob = async (jobInfo: jobInfo) =>
-  fetch('/fastify/jobinfo',
+  fetch('/jobinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -33,7 +33,7 @@ export const finishJob = async (jobInfo: jobInfo) =>
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const patchJob = async (jobInfo: Partial<jobInfo>, no: number, corpId: string) =>
-  fetch('/fastify/jobinfo',
+  fetch('/jobinfo',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -43,7 +43,7 @@ export const patchJob = async (jobInfo: Partial<jobInfo>, no: number, corpId: st
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const deleteJob = async (no: number, corpId: string) =>
-  fetch('/fastify/jobinfo',
+  fetch('/jobinfo',
     {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },

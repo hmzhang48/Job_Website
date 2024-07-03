@@ -1,6 +1,15 @@
-import provinces from '../assets/provinces.json'
-import cities from '../assets/cities.json'
-import areas from '../assets/areas.json'
+import type { province, city, area } from "./interface.ts"
+
+const provinces = await fetch('/JSON/provinces.json', { method: 'GET' })
+  .then(response => response.json())
+  .then((value: province[]) => value)
+const cities = await fetch('/JSON/cities.json', { method: 'GET' })
+  .then(response => response.json())
+  .then((value: city[]) => value)
+const areas = await fetch('/JSON/areas.json', { method: 'GET' })
+  .then(response => response.json())
+  .then((value: area[]) => value)
+
 export const initProvince = (province?: HTMLSelectElement) => {
   if (province) {
     for (const value of provinces) {

@@ -1,11 +1,11 @@
 import { hrInfo, corpInfo } from '../interface.ts'
 export const existCorp = async (corpid: string) =>
-  fetch('/fastify/corp-check?corpid=' + corpid,
+  fetch('/corp-check?corpid=' + corpid,
     { method: 'GET', credentials: 'include' })
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const getCorpInfo = async (logo?: string) =>
-  fetch(`/fastify/corpinfo${logo ? '?logo=' + logo : ''}`,
+  fetch(`/corpinfo${logo ? '?logo=' + logo : ''}`,
     { method: 'GET', credentials: 'include' })
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: {
@@ -14,7 +14,7 @@ export const getCorpInfo = async (logo?: string) =>
       { hrList?: Pick<hrInfo, 'name' | 'hrId' | 'avatar'>[] }
     } | undefined) => value)
 export const postCorpInfo = async (corpInfo: corpInfo) =>
-  fetch('/fastify/corpinfo',
+  fetch('/corpinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

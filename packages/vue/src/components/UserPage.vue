@@ -97,7 +97,7 @@ let corp = ref({
   show: false, corpName: '', logo: '', brief: '',
 })
 let src = computed(() =>
-  corp.value.logo ? `/fastify/image/${corp.value.logo}.png` : '',
+  corp.value.logo ? `/image/${corp.value.logo}.png` : '',
 )
 const showCorp = async (logo: string) => {
   let c = await getCorpInfo(logo)

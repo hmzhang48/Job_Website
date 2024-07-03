@@ -49,3 +49,14 @@ export interface infoItem {
   time: string
   no: number
 }
+export interface province {
+  code: string,
+  name: string,
+}
+export interface city extends province {
+  provinceCode: string
+}
+
+export interface area extends city{
+  cityCode: string,
+}

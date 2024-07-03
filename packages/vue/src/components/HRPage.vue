@@ -74,7 +74,7 @@ watch(load, async () => {
   }
 })
 let src = computed(() =>
-  corp?.value['logo'] ? `/fastify/image/${corp.value['logo']}.png` : '',
+  corp?.value['logo'] ? `/image/${corp.value['logo']}.png` : '',
 )
 let newJob = ref(false)
 const finishJob = async () => {
