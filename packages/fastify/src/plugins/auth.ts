@@ -14,13 +14,13 @@ declare module '@fastify/jwt' {
 }
 const urlList = new Set([
   '/email-check', '/email-validate', '/phone-validate',
-  '/register', '/login'
+  '/register', '/login',
 ])
 const fileList = new Set([
-  ".html", ".css", ".js", ".json", ".png", ".svg", ".ico", ".pdf"
+  '.html', '.css', '.js', '.json', '.png', '.svg', '.ico', '.pdf',
 ])
 const urlCheck = (url: string) => {
-  if (url === "/") {
+  if (url === '/') {
     return false
   }
   for (const u of urlList) {

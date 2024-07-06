@@ -5,7 +5,7 @@ import type { JSONSchema } from 'json-schema-to-ts'
 import { eq } from 'drizzle-orm'
 import type { InferInsertModel } from 'drizzle-orm'
 import { userInfo } from '../../lib/schema.ts'
-const idPattern = '^\\d{17}[0-9Xx]$'
+const idPattern = String.raw`^\d{17}[0-9Xx]$`
 const userinfo: FastifyPluginCallback = fp((f, _, done) => {
   const server = f.withTypeProvider<JsonSchemaToTsProvider>()
   server.get(
@@ -26,11 +26,11 @@ const userinfo: FastifyPluginCallback = fp((f, _, done) => {
                   },
                   location: {
                     type: 'string',
-                    pattern: '^\\d{6}$',
+                    pattern: String.raw`^\d{6}$`,
                   },
                   phone: {
                     type: 'string',
-                    pattern: '^\\d{11}$',
+                    pattern: String.raw`^\d{11}$`,
                   },
                   avatar: { type: 'string' },
                   cv: { type: 'string' },
@@ -72,11 +72,11 @@ const userinfo: FastifyPluginCallback = fp((f, _, done) => {
             },
             location: {
               type: 'string',
-              pattern: '^\\d{6}$',
+              pattern: String.raw`^\d{6}$`,
             },
             phone: {
               type: 'string',
-              pattern: '^\\d{11}$',
+              pattern: String.raw`^\d{11}$`,
             },
             avatar: { type: 'string' },
           },
@@ -113,11 +113,11 @@ const userinfo: FastifyPluginCallback = fp((f, _, done) => {
           properties: {
             location: {
               type: 'string',
-              pattern: '^\\d{6}$',
+              pattern: String.raw`^\d{6}$`,
             },
             phone: {
               type: 'string',
-              pattern: '^\\d{11}$',
+              pattern: String.raw`^\d{11}$`,
             },
           },
           additionalProperties: false,

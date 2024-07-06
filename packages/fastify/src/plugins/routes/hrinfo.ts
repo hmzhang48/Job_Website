@@ -5,7 +5,7 @@ import type { JSONSchema } from 'json-schema-to-ts'
 import { eq } from 'drizzle-orm'
 import type { InferInsertModel } from 'drizzle-orm'
 import { hrInfo, corpInfo } from '../../lib/schema.ts'
-const regexp = '^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$'
+const regexp = String.raw`^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$`
 const hrinfo: FastifyPluginCallback = fp((f, _, done) => {
   const server = f.withTypeProvider<JsonSchemaToTsProvider>()
   server.get(
@@ -27,7 +27,7 @@ const hrinfo: FastifyPluginCallback = fp((f, _, done) => {
                   },
                   phone: {
                     type: 'string',
-                    pattern: '^\\d{11}$',
+                    pattern: String.raw`^\d{11}$`,
                   },
                   avatar: { type: 'string' },
                 },
@@ -66,7 +66,7 @@ const hrinfo: FastifyPluginCallback = fp((f, _, done) => {
             },
             phone: {
               type: 'string',
-              pattern: '^\\d{11}$',
+              pattern: String.raw`^\d{11}$`,
             },
             avatar: { type: 'string' },
           },
@@ -114,7 +114,7 @@ const hrinfo: FastifyPluginCallback = fp((f, _, done) => {
           properties: {
             phone: {
               type: 'string',
-              pattern: '^\\d{11}$',
+              pattern: String.raw`^\d{11}$`,
             },
           },
           additionalProperties: false,

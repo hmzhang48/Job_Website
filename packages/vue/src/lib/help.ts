@@ -1,4 +1,4 @@
-import type { province, city, area } from "./interface.ts"
+import type { province, city, area } from './interface.ts'
 
 const provinces = await fetch('/JSON/provinces.json', { method: 'GET' })
   .then(response => response.json())

@@ -48,8 +48,8 @@ void server.register(cookie, {
 void server.register(staticfile, {
   root: [
     path.resolve('./public'),
-    path.resolve('./client')
-  ]
+    path.resolve('./client'),
+  ],
 })
 void server.register(multipart, {
   limits: {
@@ -61,7 +61,7 @@ void server.register(websocket, {
     maxPayload: 1_048_576,
   },
 })
-server.get("/", async (_, reply)=>{
-  reply.redirect("/index.html")
+server.get('/', async (_, reply) => {
+  void reply.redirect('/index.html')
 })
 export default server

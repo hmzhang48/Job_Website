@@ -1,8 +1,8 @@
 export default {
-  "extensions": {
-    "ts": "module"
+  extensions: {
+    ts: "module"
   },
-  "nodeArguments": [
+  nodeArguments: [
     "--import=tsx/esm",
     "--env-file=.env"
   ]

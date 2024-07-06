@@ -98,7 +98,7 @@ const register: FastifyPluginCallback = fp((f, _, done) => {
           properties: {
             phone: {
               type: 'string',
-              pattern: '^\\d{11}$',
+              pattern: String.raw`^\d{11}$`,
             },
           },
           required: ['phone'],

@@ -6,8 +6,8 @@ import { eq, desc, and, not, like, sql } from 'drizzle-orm'
 import type { SQL, InferInsertModel } from 'drizzle-orm'
 import { userInfo, hrInfo, corpInfo, jobInfo } from '../../lib/schema.ts'
 const corpIDPattern
-  = '^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$'
-const salaryPattern = '^\\[[0-9]+(\\.[0-9]{1,3})?,[0-9]+(\\.[0-9]{1,3})?\\]$'
+  = String.raw`^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$`
+const salaryPattern = String.raw`^\[[0-9]+(\.[0-9]{1,3})?,[0-9]+(\.[0-9]{1,3})?\]$`
 const jobinfo: FastifyPluginCallback = fp((f, _, done) => {
   const server = f.withTypeProvider<JsonSchemaToTsProvider>()
   server.get(
@@ -21,11 +21,11 @@ const jobinfo: FastifyPluginCallback = fp((f, _, done) => {
             type: { enum: ['part-time', 'full-time'] },
             salary: {
               type: 'string',
-              pattern: '^\\d+$',
+              pattern: String.raw`^\d+$`,
             },
             location: {
               type: 'string',
-              pattern: '^\\d{4}$',
+              pattern: String.raw`^\d{4}$`,
             },
             logo: { type: 'string' },
             offset: { type: 'number' },
@@ -52,7 +52,7 @@ const jobinfo: FastifyPluginCallback = fp((f, _, done) => {
                     },
                     location: {
                       type: 'string',
-                      pattern: '^\\d{6}$',
+                      pattern: String.raw`^\d{6}$`,
                     },
                     no: { type: 'number' },
                     corpInfo: {
@@ -173,7 +173,7 @@ const jobinfo: FastifyPluginCallback = fp((f, _, done) => {
             },
             location: {
               type: 'string',
-              pattern: '^\\d{6}$',
+              pattern: String.raw`^\d{6}$`,
             },
           },
           required: ['position', 'overview', 'type', 'salary', 'location'],
@@ -227,7 +227,7 @@ const jobinfo: FastifyPluginCallback = fp((f, _, done) => {
             },
             location: {
               type: 'string',
-              pattern: '^\\d{6}$',
+              pattern: String.raw`^\d{6}$`,
             },
             corpId: {
               type: 'string',

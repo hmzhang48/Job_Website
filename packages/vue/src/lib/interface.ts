@@ -50,13 +50,13 @@ export interface infoItem {
   no: number
 }
 export interface province {
-  code: string,
-  name: string,
+  code: string
+  name: string
 }
 export interface city extends province {
   provinceCode: string
 }
 
-export interface area extends city{
-  cityCode: string,
+export interface area extends city {
+  cityCode: string
 }
