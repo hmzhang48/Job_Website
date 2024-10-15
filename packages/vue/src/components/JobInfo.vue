@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, useTemplateRef } from 'vue'
 import { finishJob, patchJob } from '../lib/fetch/jobinfo.ts'
 import { initProvince, initCity, initArea } from '../lib/help.ts'
 import type { jobItem, jobInfo } from '../lib/interface.ts'
@@ -47,9 +47,9 @@ let maxSalary = ref(0)
 const checkSalary = () => invalid.value['salary'] = (
   minSalary.value === 0 || maxSalary.value === 0 || minSalary.value > maxSalary.value
 )
-let provinceSelect = ref<HTMLSelectElement>()
-let citySelect = ref<HTMLSelectElement>()
-let areaSelect = ref<HTMLSelectElement>()
+let provinceSelect = useTemplateRef('provinceSelect')
+let citySelect = useTemplateRef('citySelect')
+let areaSelect = useTemplateRef('areaSelect')
 onMounted(() => {
   initProvince(provinceSelect.value)
   if (props.no && props.job) {
@@ -142,7 +142,12 @@ const submit = async () => {
       }
       if (Object.keys(jobInfo).length > 0) {
         const result = await patchJob(jobInfo, props.no, props.corpId)
-        result ? emits('patchJob', jobInfo) : showModel('请重试')
+        if (result) {
+          emits('patchJob', jobInfo)
+        }
+        else {
+          showModel('请重试')
+        }
       }
       else {
         emits('patchJob')
@@ -156,7 +161,12 @@ const submit = async () => {
         salary: `[${minSalary.value},${maxSalary.value}]`,
         location: location.value,
       })
-      result ? emits('finishJob') : showModel('请重试')
+      if (result) {
+        emits('finishJob')
+      }
+      else {
+        showModel('请重试')
+      }
     }
     loading.value = false
   }

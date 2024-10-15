@@ -6,8 +6,8 @@ import vue from 'eslint-plugin-vue'
 export default tslint.config(
   eslint.configs.recommended,
   unicorn.configs[ 'flat/recommended' ],
-  ...tslint.configs.recommendedTypeChecked,
-  ...tslint.configs.stylisticTypeChecked,
+  ...tslint.configs.recommended,
+  ...tslint.configs.stylistic,
   stylelint.configs[ 'recommended-flat' ],
   ...vue.configs[ 'flat/recommended' ],
   {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, onMounted, computed } from 'vue'
+import { ref, inject, onMounted, computed, useTemplateRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { uploadCv } from '../lib/fetch/cv.ts'
 import { infoKey, updateKey } from '../lib/inject.ts'
@@ -14,14 +14,14 @@ let update = inject(updateKey, () => ({}))
 let src = computed(() =>
   info?.value['cv'] ? `/PDF/${info.value['cv']}.pdf` : '',
 )
-let embed = ref<HTMLEmbedElement>()
+let embed = useTemplateRef('embed')
 onMounted(() => {
   if (info?.value['cv'] && embed.value) {
     embed.value.src = src.value
     preview.value = true
   }
 })
-let fileInput = ref<HTMLInputElement>()
+let fileInput = useTemplateRef('fileInput')
 let newCv = ref<File>()
 let wrong = ref(false)
 let preview = ref(false)

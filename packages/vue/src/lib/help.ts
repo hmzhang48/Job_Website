@@ -10,7 +10,7 @@ const areas = await fetch('/JSON/areas.json', { method: 'GET' })
   .then(response => response.json())
   .then((value: area[]) => value)
 
-export const initProvince = (province?: HTMLSelectElement) => {
+export const initProvince = (province: HTMLSelectElement | null) => {
   if (province) {
     for (const value of provinces) {
       const option = document.createElement('option')
@@ -20,7 +20,7 @@ export const initProvince = (province?: HTMLSelectElement) => {
     }
   }
 }
-export const initCity = (province?: HTMLSelectElement, city?: HTMLSelectElement, area?: HTMLSelectElement) => {
+export const initCity = (province: HTMLSelectElement | null, city: HTMLSelectElement | null, area?: HTMLSelectElement | null) => {
   if (province && city) {
     const code = province.value
     removeOption(city)
@@ -34,7 +34,7 @@ export const initCity = (province?: HTMLSelectElement, city?: HTMLSelectElement,
     }
   }
 }
-export const initArea = (city?: HTMLSelectElement, area?: HTMLSelectElement) => {
+export const initArea = (city: HTMLSelectElement | null, area: HTMLSelectElement | null) => {
   if (city && area) {
     const code = city.value
     removeOption(area)
@@ -47,7 +47,7 @@ export const initArea = (city?: HTMLSelectElement, area?: HTMLSelectElement) => 
     }
   }
 }
-export const removeOption = (element?: HTMLSelectElement) => {
+export const removeOption = (element?: HTMLSelectElement | null) => {
   if (element) {
     const l = element.length
     for (let index = 1; index < l; index++) {

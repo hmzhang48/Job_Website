@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, useTemplateRef } from 'vue'
 import { uploadImage } from '../lib/fetch/image.ts'
 import { postCorpInfo } from '../lib/fetch/corpinfo.ts'
 import { loadImage } from '../lib/help.ts'
@@ -19,10 +19,10 @@ let invalid = ref(Object.create(null) as Record<string, boolean>)
 let name = ref('')
 const checkName = () => invalid.value['name'] = (name.value === '')
 let origin = await loadImage(imgURL)
-let canvas = ref<HTMLCanvasElement>()
+let canvas = useTemplateRef('canvas')
 let image = useCanvas(canvas, origin)
 let logo = ref<File>()
-let logoInput = ref<HTMLInputElement>()
+let logoInput = useTemplateRef('logoInput')
 watch(logo, async () => {
   if (logo.value) {
     image.value = await loadImage(logo.value)
@@ -79,7 +79,12 @@ const submit = async () => {
         chiefHR: props.hrId,
       })
     }
-    result ? emits('exist') : showModel('请重试')
+    if (result) {
+      emits('exist')
+    }
+    else {
+      showModel('请重试')
+    }
     loading.value = false
   }
 }

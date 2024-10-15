@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, useTemplateRef } from 'vue'
 import { useUserStore } from '../stores/userStore.ts'
 import { validPhone } from '../lib/fetch/register.ts'
 import { uploadImage } from '../lib/fetch/image.ts'
@@ -35,10 +35,10 @@ let invalid = ref(Object.create(null) as Record<string, boolean>)
 let name = ref('')
 const checkName = () => invalid.value['name'] = (name.value === '')
 let origin = await loadImage(imgURL)
-let canvas = ref<HTMLCanvasElement>()
+let canvas = useTemplateRef('canvas')
 let image = useCanvas(canvas, origin)
 let avatar = ref<File>()
-let avatarInput = ref<HTMLInputElement>()
+let avatarInput = useTemplateRef('avatarInput')
 watch(avatar, async () => {
   if (avatar.value) {
     image.value = await loadImage(avatar.value)

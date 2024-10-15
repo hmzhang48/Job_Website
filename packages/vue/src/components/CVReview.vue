@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, useTemplateRef } from 'vue'
 const props = defineProps<{
   cv: string
 }>()
 const emits = defineEmits<{
   finishCv: [action: string, cv: string, datetime?: string, location?: string]
 }>()
-let embed = ref<HTMLEmbedElement>()
+let embed = useTemplateRef('embed')
 let src = computed(() => `/pdf/${props.cv}.pdf`)
 onMounted(() => {
   if (embed.value) {

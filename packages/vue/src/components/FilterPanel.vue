@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, useTemplateRef } from 'vue'
 import { initProvince, initCity, removeOption } from '../lib/help.ts'
 import type { jobInfo } from '../lib/interface.ts'
 const emits = defineEmits<{
@@ -32,8 +32,8 @@ watch(type, () => {
     }
   }
 })
-let provinceSelect = ref<HTMLSelectElement>()
-let citySelect = ref<HTMLSelectElement>()
+let provinceSelect = useTemplateRef('provinceSelect')
+let citySelect = useTemplateRef('citySelect')
 let province = ref('province')
 let city = ref('city')
 onMounted(() => initProvince(provinceSelect.value))

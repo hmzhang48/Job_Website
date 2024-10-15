@@ -43,7 +43,7 @@ const changeItem = async (no: number, action: string) => {
 </script>
 
 <template>
-  <article ref="infoCard">
+  <article>
     <p><strong>信息箱</strong></p>
     <template
       v-for="info in infoBox"

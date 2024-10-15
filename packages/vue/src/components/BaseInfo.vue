@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, computed, onMounted } from 'vue'
+import { ref, inject, computed, onMounted, useTemplateRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { patchUserInfo } from '../lib/fetch/userinfo.ts'
 import { patchHRInfo } from '../lib/fetch/hrinfo.ts'
@@ -20,9 +20,9 @@ let corp = inject(corpKey)
 let update = inject(updateKey, () => ({}))
 let l = ref(false)
 let p = ref(false)
-let provinceSelect = ref<HTMLSelectElement>()
-let citySelect = ref<HTMLSelectElement>()
-let areaSelect = ref<HTMLSelectElement>()
+let provinceSelect = useTemplateRef('provinceSelect')
+let citySelect = useTemplateRef('citySelect')
+let areaSelect = useTemplateRef('areaSelect')
 onMounted(() => initProvince(provinceSelect.value))
 const addCity = () => initCity(provinceSelect.value, citySelect.value, areaSelect.value)
 const addArea = () => initArea(citySelect.value, areaSelect.value)

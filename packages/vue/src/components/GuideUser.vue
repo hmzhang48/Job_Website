@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, useTemplateRef } from 'vue'
 import { useUserStore } from '../stores/userStore.ts'
 import { validPhone } from '../lib/fetch/register.ts'
 import { uploadImage } from '../lib/fetch/image.ts'
@@ -13,10 +13,10 @@ let invalid = ref(Object.create(null) as Record<string, boolean>)
 let name = ref('')
 const checkName = () => invalid.value['name'] = (name.value === '')
 let initial = await loadImage(imgURL)
-let canvas = ref<HTMLCanvasElement>()
+let canvas = useTemplateRef('canvas')
 let image = useCanvas(canvas, initial)
 let avatar = ref<File>()
-let avatarInput = ref<HTMLInputElement>()
+let avatarInput = useTemplateRef('avatarInput')
 watch(avatar, async () => {
   if (avatar.value) {
     image.value = await loadImage(avatar.value)
@@ -39,9 +39,9 @@ const checkAvatar = () => {
 let id = ref('')
 const idRegex = new RegExp(/^\d{17}([\dXx])$/)
 const checkId = () => invalid.value['id'] = !idRegex.test(id.value)
-let provinceSelect = ref<HTMLSelectElement>()
-let citySelect = ref<HTMLSelectElement>()
-let areaSelect = ref<HTMLSelectElement>()
+let provinceSelect = useTemplateRef('provinceSelect')
+let citySelect = useTemplateRef('citySelect')
+let areaSelect = useTemplateRef('areaSelect')
 onMounted(() => initProvince(provinceSelect.value))
 const addCity = () => {
   initCity(provinceSelect.value, citySelect.value, areaSelect.value)

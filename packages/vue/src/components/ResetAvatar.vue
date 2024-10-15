@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, inject } from 'vue'
+import { ref, watch, computed, inject, useTemplateRef } from 'vue'
 import { resetAvatar } from '../lib/fetch/image.ts'
 import { loadImage } from '../lib/help.ts'
 import { useCanvas } from '../lib/use.ts'
@@ -13,7 +13,7 @@ let src = computed(() =>
   info?.value['avatar'] ? `/image/${info.value['avatar']}.png` : '',
 )
 let origin = await loadImage(src.value)
-let canvas = ref<HTMLCanvasElement>()
+let canvas = useTemplateRef('canvas')
 let image = useCanvas(canvas, origin)
 let newAvatar = ref<File>()
 watch(newAvatar, async () => {
@@ -21,7 +21,7 @@ watch(newAvatar, async () => {
     image.value = await loadImage(newAvatar.value)
   }
 })
-let avatarInput = ref<HTMLInputElement>()
+let avatarInput = useTemplateRef('avatarInput')
 let invalid = ref(false)
 const checkAvatar = () => {
   const file = avatarInput.value?.files?.[0]

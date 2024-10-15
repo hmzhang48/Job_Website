@@ -1,6 +1,6 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { Ref } from 'vue'
-export const useCanvas = (canvas: Ref<HTMLCanvasElement | undefined>, initial: HTMLImageElement) => {
+export const useCanvas = (canvas: Ref<HTMLCanvasElement | null>, initial: HTMLImageElement) => {
   const image = ref(initial)
   let drag = false
   const start = { x: 0, y: 0 }
@@ -43,7 +43,7 @@ export const useCanvas = (canvas: Ref<HTMLCanvasElement | undefined>, initial: H
               )
             }
           }, { passive: false, signal: controller.signal })
-        window.addEventListener('mouseup',
+        globalThis.addEventListener('mouseup',
           () => drag = false,
           { signal: controller.signal })
         canvas.value.addEventListener('wheel',
@@ -78,7 +78,7 @@ export const useCanvas = (canvas: Ref<HTMLCanvasElement | undefined>, initial: H
   })
   return image
 }
-export const useObserver = (element: Ref<HTMLElement | undefined>, load: Ref<boolean>) => {
+export const useObserver = (element: Ref<HTMLElement | null>, load: Ref<boolean>) => {
   let intersectionRatio = 0
   const observer = new IntersectionObserver(
     (entries) => {

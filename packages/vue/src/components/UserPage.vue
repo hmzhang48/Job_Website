@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getCorpInfo } from '../lib/fetch/corpinfo.ts'
@@ -85,7 +85,7 @@ const restart = async () => {
     await searchJobs()
   }
 }
-let observed = ref<HTMLParagraphElement>()
+let observed = useTemplateRef('observed')
 let load = ref(false)
 useObserver(observed, load)
 watch(load, async () => {
