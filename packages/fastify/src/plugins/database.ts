@@ -13,12 +13,13 @@ declare module 'fastify' {
   }
 }
 const database: FastifyPluginCallback = fp((f, _, done) => {
-  const client = postgres((env['database']!))
+  const url = env['NODE_ENV'] === 'production'
+    ? `postgres://${env['RDS_USERNAME']}:${env['RDS_PASSWORD']}@${env['RDS_HOSTNAME']}:${env['RDS_PORT']}/${env['RDS_DB_NAME']}`
+    : `postgres://${env['PG_USERNAME']}:${env['PG_PASSWORD']}@${env['PG_HOSTNAME']}:${env['PG_PORT']}/${env['PG_DB_NAME']}`
+  const client = postgres(url)
   f.decorate('postgres', client)
   f.decorate('drizzle', drizzle(client, { schema, logger: true }))
-  f.addHook('onClose', async () => {
-    await client.end()
-  })
+  f.addHook('onClose', async () => await client.end())
   done()
 })
 export default database

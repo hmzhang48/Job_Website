@@ -8,11 +8,11 @@
   "scripts": {
     "generate": "drizzle-kit generate:pg",
     "drop": "drizzle-kit drop",
-    "migrate": "node --env-file=.env ./migrate.js",
-    "dev": "tsx watch --env-file=.env ./src/app.ts",
+    "migrate": "node --env-file=.env.development ./migrate.js",
+    "dev": "tsx watch --env-file=.env.development ./src/app.ts",
     "test": "ava --watch ./src/test/test.ts",
     "build": "node ./build.js",
-    "start": "node ./server/app.js"
+    "start": "node --env-file=.env.production ./server/app.js"
   },
   "dependencies": {
     "@fastify/autoload": "^6.0.2",
@@ -26,7 +26,7 @@
     "@fastify/postgres": "^6.0.1",
     "@fastify/secure-session": "^8.1.0",
     "@fastify/sensible": "^6.0.1",
-    "@fastify/static": "^8.0.1",
+    "@fastify/static": "^8.0.2",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@fastify/websocket": "^11.0.1",
     "awilix": "^12.0.2",
@@ -44,12 +44,12 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^22.7.5",
+    "@types/node": "^22.7.6",
     "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.10",
     "@types/ws": "^8.5.12",
-    "drizzle-kit": "^0.25.0",
-    "pino-pretty": "^11.2.2",
+    "drizzle-kit": "^0.26.2",
+    "pino-pretty": "^11.3.0",
     "tsx": "^4.19.1"
   }
 }
