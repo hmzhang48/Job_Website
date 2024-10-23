@@ -19,8 +19,9 @@ const emits = defineEmits<{
   updateInfo: []
 }>()
 watch(userState, () => (buttonState.value = userState.value ? 2 : 0))
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
 let src = computed(() =>
-  props.avatar ? `/image/${props.avatar}.png` : '',
+  props.avatar ? `${url}/png/${props.avatar}.png` : '',
 )
 let buttonState = ref(0)
 const changeState = async () => {
@@ -44,7 +45,9 @@ const changeState = async () => {
       <li><strong>精银聚</strong></li>
     </ul>
     <ul>
-      <li><img :src="src"></li>
+      <li>
+        <img :src="src">
+      </li>
       <li v-if="userState && !guideState">
         <details class="dropdown">
           <summary>

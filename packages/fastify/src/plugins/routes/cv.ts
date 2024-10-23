@@ -41,8 +41,8 @@ const cv: FastifyPluginCallback = fp((f, _, done) => {
               .then(() => true)
               .catch(error => server.log.error(error))
             await (result
-              ? server.deleteFile('PDF', info.cv + '.pdf')
-              : server.deleteFile('PDF', fileName + '.pdf'))
+              ? server.deleteFile('pdf', info.cv)
+              : server.deleteFile('pdf', fileName))
           }
           void reply.send({ result: result ? fileName : '' })
         }

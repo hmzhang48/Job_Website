@@ -7,7 +7,8 @@ const emits = defineEmits<{
   finishCv: [action: string, cv: string, datetime?: string, location?: string]
 }>()
 let embed = useTemplateRef('embed')
-let src = computed(() => `/pdf/${props.cv}.pdf`)
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+let src = computed(() => `${url}/pdf/${props.cv}.pdf`)
 onMounted(() => {
   if (embed.value) {
     embed.value.src = src.value

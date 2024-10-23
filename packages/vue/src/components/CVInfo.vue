@@ -11,8 +11,9 @@ const { showModel } = modalStore
 const { cvState } = storeToRefs(validStore)
 let info = inject(infoKey)
 let update = inject(updateKey, () => ({}))
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
 let src = computed(() =>
-  info?.value['cv'] ? `/PDF/${info.value['cv']}.pdf` : '',
+  info?.value['cv'] ? `${url}/pdf/${info.value['cv']}.pdf` : '',
 )
 let embed = useTemplateRef('embed')
 onMounted(() => {

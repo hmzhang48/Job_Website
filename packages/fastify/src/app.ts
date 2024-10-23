@@ -1,8 +1,9 @@
 import server from './server.ts'
+import { env } from 'node:process'
 server.listen(
   {
-    host: 'localhost',
-    port: 3000,
+    host: env['PORT'] ? '0.0.0.0' : 'localhost',
+    port: env['PORT'] ? Number.parseInt(env['PORT']) : 3000,
   },
   (error) => {
     if (error) {

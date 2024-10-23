@@ -8,13 +8,15 @@
   "scripts": {
     "generate": "drizzle-kit generate:pg",
     "drop": "drizzle-kit drop",
-    "migrate": "node --env-file=.env.development ./migrate.js",
-    "dev": "tsx watch --env-file=.env.development ./src/app.ts",
+    "migrate": "node ./migrate.js",
+    "dev": "tsx watch ./src/app.ts",
     "test": "ava --watch ./src/test/test.ts",
     "build": "node ./build.js",
-    "start": "node --env-file=.env.development ./server/app.js"
+    "start": "node ./dist/app.js"
   },
   "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@azure/storage-blob": "^12.25.0",
     "@fastify/autoload": "^6.0.2",
     "@fastify/awilix": "^6.0.1",
     "@fastify/cookie": "11.0.0",
@@ -29,9 +31,9 @@
     "@fastify/static": "^8.0.2",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@fastify/websocket": "^11.0.1",
-    "awilix": "^12.0.2",
+    "awilix": "^12.0.3",
     "crypto-random-string": "^5.0.0",
-    "drizzle-orm": "^0.34.1",
+    "drizzle-orm": "^0.35.3",
     "fast-jwt": "^4.0.5",
     "fastify": "^5.0.0",
     "fastify-plugin": "^5.0.1",
@@ -45,7 +47,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^22.7.7",
+    "@types/node": "^22.7.9",
     "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.10",
     "@types/ws": "^8.5.12",

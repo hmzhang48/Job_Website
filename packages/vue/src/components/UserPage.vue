@@ -96,8 +96,9 @@ watch(load, async () => {
 let corp = ref({
   show: false, corpName: '', logo: '', brief: '',
 })
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
 let src = computed(() =>
-  corp.value.logo ? `/image/${corp.value.logo}.png` : '',
+  corp.value.logo ? `${url}/png/${corp.value.logo}.png` : '',
 )
 const showCorp = async (logo: string) => {
   let c = await getCorpInfo(logo)

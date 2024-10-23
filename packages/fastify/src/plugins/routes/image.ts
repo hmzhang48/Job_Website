@@ -71,8 +71,8 @@ const image: FastifyPluginCallback = fp((f, _, done) => {
             .then(() => true)
             .catch(error => server.log.error(error))
           await (result
-            ? server.deleteFile('image', request.query.fileName + '.png')
-            : server.deleteFile('image', fileName + '.png'))
+            ? server.deleteFile('png', request.query.fileName)
+            : server.deleteFile('png', fileName))
         }
         void reply.send({ result: result ? fileName : '' })
       }

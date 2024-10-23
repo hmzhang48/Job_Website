@@ -6,5 +6,5 @@ await esbuild.build({
   format: "esm",
   packages: "external",
   bundle: true,
-  outdir: 'server',
+  outdir: 'dist',
 })

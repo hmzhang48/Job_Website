@@ -5,16 +5,14 @@ import { loadImage } from '../lib/help.ts'
 import { useCanvas } from '../lib/use.ts'
 import { infoKey, updateKey } from '../lib/inject.ts'
 import { useModalStore } from '../stores/modalStore.ts'
+import imgURL from '../assets/vue.svg'
 const modalStore = useModalStore()
 const { showModel } = modalStore
 let info = inject(infoKey)
 let update = inject(updateKey, () => ({}))
-let src = computed(() =>
-  info?.value['avatar'] ? `/image/${info.value['avatar']}.png` : '',
-)
-let origin = await loadImage(src.value)
+const initial = await loadImage(imgURL)
 let canvas = useTemplateRef('canvas')
-let image = useCanvas(canvas, origin)
+let image = useCanvas(canvas, initial)
 let newAvatar = ref<File>()
 watch(newAvatar, async () => {
   if (newAvatar.value) {

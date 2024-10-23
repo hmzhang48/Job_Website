@@ -10,8 +10,8 @@ export const getCorpInfo = async (logo?: string) =>
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: {
       info: Omit<corpInfo, 'corpId' | 'chiefHR'> &
-      { valid?: boolean } &
-      { hrList?: Pick<hrInfo, 'name' | 'hrId' | 'avatar'>[] }
+        { valid?: boolean } &
+        { hrList?: Pick<hrInfo, 'name' | 'hrId' | 'avatar'>[] }
     } | undefined) => value)
 export const postCorpInfo = async (corpInfo: corpInfo) =>
   fetch('/corpinfo',

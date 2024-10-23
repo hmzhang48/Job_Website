@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, inject } from 'vue'
 import { hrListKey } from '../lib/inject.ts'
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
 let hrs = inject(hrListKey)
 let verify = ref(false)
 </script>
@@ -32,7 +33,7 @@ let verify = ref(false)
           :key="hr.hrId"
         >
           <div class="list">
-            <img :src="`/image/${hr.avatar}.png`">
+            <img :src="`${url}/png/${hr.avatar}.png`">
             <div>
               <span>姓名：{{ hr.name }}</span>
               <br>

@@ -73,8 +73,9 @@ watch(load, async () => {
     await searchJobs()
   }
 })
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
 let src = computed(() =>
-  corp?.value['logo'] ? `/image/${corp.value['logo']}.png` : '',
+  corp?.value['logo'] ? `${url}/png/${corp.value['logo']}.png` : '',
 )
 let newJob = ref(false)
 const finishJob = async () => {

@@ -13,7 +13,8 @@ const emits = defineEmits<{
   sendCv: [no: number]
   getCv: [no: number]
 }>()
-let src = computed(() => `/image/${props.logo}.png`)
+const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+let src = computed(() => `${url}/png/${props.logo}.png`)
 </script>
 
 <template>
