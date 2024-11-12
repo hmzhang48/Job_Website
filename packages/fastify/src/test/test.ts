@@ -1,6 +1,10 @@
 import test from 'ava'
 import server from '../server.ts'
-test('test', (t) => {
-  void server.inject()
-  t.teardown(() => server.close())
-})
+test(
+  'test',
+  ( t ) =>
+  {
+    server.inject()
+    t.teardown( () => server.close() )
+  }
+)

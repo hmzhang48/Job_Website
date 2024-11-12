@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, inject } from 'vue'
-import { hrListKey } from '../lib/inject.ts'
-const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
-let hrs = inject(hrListKey)
-let verify = ref(false)
+  import { ref, inject } from 'vue'
+  import { hrListKey } from '../lib/inject.ts'
+  const env = import.meta.env
+  const url = env.PROD ? `https://${ env.VITE_AZURE_STORAGE_ACCOUNT }.blob.core.windows.net` : ''
+  let hrs = inject( hrListKey )
+  let verify = ref( false )
 </script>
 
 <template>
@@ -13,27 +14,27 @@ let verify = ref(false)
         <nav>
           <ul>
             <li
-              :class="verify ? 'normal':'select'"
+              :class=" verify ? 'normal' : 'select' "
               @click.prevent="verify = false"
             >
               HR管理
             </li>
-            <li :class="verify ? 'select' : 'normal'">
+            <li :class=" verify ? 'select' : 'normal' ">
               企业认证
             </li>
           </ul>
         </nav>
       </article>
     </aside>
-    <article v-if="!verify">
+    <article v-if=" !verify ">
       <p><strong>企业HR列表</strong></p>
-      <div v-if="hrs?.length">
+      <div v-if=" hrs?.length ">
         <template
-          v-for="hr in hrs"
+          v-for=" hr in hrs "
           :key="hr.hrId"
         >
           <div class="list">
-            <img :src="`${url}/png/${hr.avatar}.png`">
+            <img :src=" `${ url }/png/${ hr.avatar }.png` ">
             <div>
               <span>姓名：{{ hr.name }}</span>
               <br>
@@ -51,25 +52,30 @@ let verify = ref(false)
 </template>
 
 <style scoped lang="scss">
-.grid {
-  grid-template-columns: max-content 1fr;
-  gap: 20px;
-}
-.normal {
-  cursor: pointer;
-  &:hover {
+  .grid {
+    grid-template-columns: max-content 1fr;
+    gap: 20px;
+  }
+
+  .normal {
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgb(239, 241, 244);
+    }
+  }
+
+  .select {
     background-color: rgb(239, 241, 244);
   }
-}
-.select {
-  background-color: rgb(239, 241, 244);
-}
-.list {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-img {
-  height: 48px;
-}
+
+  .list {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  img {
+    height: 48px;
+  }
 </style>

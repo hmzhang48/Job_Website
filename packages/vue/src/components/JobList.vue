@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-const props = defineProps<{
-  hrState: boolean
-  corpName: string
-  logo: string
-  no: number
-}>()
-const emits = defineEmits<{
-  searchCorp: [logo: string]
-  updateJob: [no: number]
-  removeJob: [no: number]
-  sendCv: [no: number]
-  getCv: [no: number]
-}>()
-const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
-let src = computed(() => `${url}/png/${props.logo}.png`)
+  import { computed } from 'vue'
+  const props = defineProps<{
+    hrState: boolean
+    corpName: string
+    logo: string
+    no: number
+  }>()
+  const emits = defineEmits<{
+    searchCorp: [ logo: string ]
+    updateJob: [ no: number ]
+    removeJob: [ no: number ]
+    sendCv: [ no: number ]
+    getCv: [ no: number ]
+  }>()
+  const env = import.meta.env
+  const url = env.PROD ? `https://${ env.VITE_AZURE_STORAGE_ACCOUNT }.blob.core.windows.net` : ''
+  let src = computed( () => `${ url }/png/${ props.logo }.png` )
 </script>
 
 <template>
@@ -22,10 +23,10 @@ let src = computed(() => `${url}/png/${props.logo}.png`)
     <details>
       <summary>
         <img
-          :src="src"
-          :title="props.corpName"
+          :src=" src "
+          :title=" props.corpName "
           align="left"
-          @click.prevent="hrState ? null : emits('searchCorp', props.logo)"
+          @click.prevent="hrState ? null : emits( 'searchCorp', props.logo )"
         >
         <slot name="summary" />
       </summary>
@@ -34,24 +35,20 @@ let src = computed(() => `${url}/png/${props.logo}.png`)
       </pre>
       <div class="button">
         <button
-          v-if="props.hrState"
+          v-if=" props.hrState "
           class="outline"
-          @click.prevent="emits('updateJob', props.no)"
+          @click.prevent="emits( 'updateJob', props.no )"
         >
           修改
         </button>
         <button
-          v-if="props.hrState"
+          v-if=" props.hrState "
           class="outline"
-          @click.prevent="emits('removeJob', props.no)"
+          @click.prevent="emits( 'removeJob', props.no )"
         >
           删除
         </button>
-        <button
-          @click.prevent="
-            hrState ? emits('getCv', props.no) : emits('sendCv', props.no)
-          "
-        >
+        <button @click.prevent="hrState ? emits( 'getCv', props.no ) : emits( 'sendCv', props.no )">
           {{ props.hrState ? "接收简历" : "投递简历" }}
         </button>
       </div>
@@ -60,19 +57,21 @@ let src = computed(() => `${url}/png/${props.logo}.png`)
 </template>
 
 <style scoped lang="scss">
-img {
-  width: 24px;
-  margin: 0 10px;
-}
-pre {
-  font-size: 0.9rem;
-  white-space: pre-line;
-  padding: 1rem;
-  border-radius: 0.5rem;
-}
-.button {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+  img {
+    width: 24px;
+    margin: 0 10px;
+  }
+
+  pre {
+    font-size: 0.9rem;
+    white-space: pre-line;
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .button {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
 </style>
