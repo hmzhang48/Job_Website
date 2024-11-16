@@ -1,6 +1,6 @@
 import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
-export default defineConfig( {
+export default defineConfig({
   build: {
     target: "esnext",
     outDir: "dist",
@@ -13,5 +13,5 @@ export default defineConfig( {
       }
     }
   },
-  plugins: [ vue() ]
-} )
+  plugins: [vue()]
+})

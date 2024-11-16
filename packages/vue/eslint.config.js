@@ -4,15 +4,15 @@ import unicorn from 'eslint-plugin-unicorn'
 import vue from 'eslint-plugin-vue'
 export default tslint.config(
   eslint.configs.recommended,
-  unicorn.configs[ 'flat/recommended' ],
+  unicorn.configs['flat/recommended'],
   ...tslint.configs.recommended,
-  ...vue.configs[ 'flat/recommended' ],
+  ...vue.configs['flat/recommended'],
   {
     languageOptions: {
       parserOptions: {
         parser: tslint.parser,
         project: true,
-        extraFileExtensions: [ ".vue" ],
+        extraFileExtensions: [".vue"],
         sourceType: "module"
       }
     },

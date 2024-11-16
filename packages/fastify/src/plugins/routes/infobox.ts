@@ -5,8 +5,7 @@ import type { JSONSchema } from 'json-schema-to-ts'
 import { eq, desc, and } from 'drizzle-orm'
 import { infoBox } from '../../lib/schema.ts'
 const infobox: FastifyPluginCallback = fp(
-  ( f, _, done ) =>
-  {
+  (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider<{
       deserialize: [
         {
@@ -28,7 +27,7 @@ const infobox: FastifyPluginCallback = fp(
               offset: { type: 'number' },
               limit: { type: 'number' },
             },
-            required: [ 'offset', 'limit' ],
+            required: ['offset', 'limit'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
@@ -51,29 +50,28 @@ const infobox: FastifyPluginCallback = fp(
                         minimum: 1,
                       },
                     },
-                    required: [ 'info', 'read', 'time', 'no' ],
+                    required: ['info', 'read', 'time', 'no'],
                     additionalProperties: false,
                   },
                 },
               },
-              required: [ 'list' ],
+              required: ['list'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const list = await server.drizzle.query.infoBox
-          .findMany( {
+          .findMany({
             columns: { uuid: false },
-            where: eq( infoBox.uuid, request.user.uuid ),
-            orderBy: [ desc( infoBox.no ) ],
+            where: eq(infoBox.uuid, request.user.uuid),
+            orderBy: [desc(infoBox.no)],
             limit: request.query.limit,
             offset: request.query.offset,
-          } )
-          .catch( error => server.log.error( error ) )
-        reply.send( { list: list ?? [] } )
+          })
+          .catch(error => server.log.error(error))
+        reply.send({ list: list ?? [] })
       },
     )
     server.get(
@@ -82,51 +80,49 @@ const infobox: FastifyPluginCallback = fp(
         schema: {
           params: {
             type: 'object',
-            properties: { action: { enum: [ 'read', 'remove' ] } },
-            required: [ 'action' ],
+            properties: { action: { enum: ['read', 'remove'] } },
+            required: ['action'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           querystring: {
             type: 'object',
             properties: { no: { type: 'number' } },
-            required: [ 'no' ],
+            required: ['no'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const options = and(
-          eq( infoBox.uuid, request.user.uuid ),
-          eq( infoBox.no, request.query.no ),
+          eq(infoBox.uuid, request.user.uuid),
+          eq(infoBox.no, request.query.no),
         )
         let result
-        switch ( request.params.action )
-        {
+        switch (request.params.action) {
           case 'read': {
-            result = await server.drizzle.update( infoBox )
-              .set( { read: true } ).where( options )
-              .then( () => true )
-              .catch( error => server.log.error( error ) )
+            result = await server.drizzle.update(infoBox)
+              .set({ read: true }).where(options)
+              .then(() => true)
+              .catch(error => server.log.error(error))
             break
           }
           case 'remove': {
-            result = await server.drizzle.delete( infoBox )
-              .where( options )
-              .then( () => true )
-              .catch( error => server.log.error( error ) )
+            result = await server.drizzle.delete(infoBox)
+              .where(options)
+              .then(() => true)
+              .catch(error => server.log.error(error))
             break
           }
         }
-        reply.send( { result: !!result } )
+        reply.send({ result: !!result })
       },
     )
     done()

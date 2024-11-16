@@ -10,11 +10,11 @@ import websocket from '@fastify/websocket'
 import { env } from 'node:process'
 import path from 'node:path'
 import url from 'node:url'
-const server = fastify( {
+const server = fastify({
   ajv: {
     customOptions: {
       strict: 'log',
-      keywords: [ 'kind', 'modifier' ],
+      keywords: ['kind', 'modifier'],
     },
   },
   logger: {
@@ -29,50 +29,50 @@ const server = fastify( {
       },
     },
   },
-} )
-server.register( sensible )
-server.register( helmet, {
+})
+server.register(sensible)
+server.register(helmet, {
   contentSecurityPolicy: {
     directives: {
       'default-src': [
         '\'self\'', 'blob:',
-        `https://${ env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] }.blob.core.windows.net`,
-      ].slice( 0, env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] ? 3 : 2 ),
+        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
+      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 3 : 2),
       'img-src': [
         '\'self\'', 'data:', 'blob:',
-        `https://${ env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] }.blob.core.windows.net`,
-      ].slice( 0, env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] ? 4 : 3 ),
+        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
+      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 4 : 3),
       'object-src': [
         '\'self\'', 'blob:',
-        `https://${ env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] }.blob.core.windows.net`,
-      ].slice( 0, env[ 'AZURE_STORAGE_ACCOUNT_NAME' ] ? 3 : 2 ),
+        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
+      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 3 : 2),
     },
   },
-} )
-server.register( autoLoad, {
-  dir: path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), 'plugins' ),
+})
+server.register(autoLoad, {
+  dir: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'plugins'),
   forceESM: true,
-} )
-server.register( jwt, {
+})
+server.register(jwt, {
   secret: 'secret',
   cookie: {
     cookieName: 'jwt',
     signed: true,
   },
-} )
-server.register( cookie, {
+})
+server.register(cookie, {
   secret: 'secret',
-} )
-server.register( staticfile, {
-  root: path.resolve( './public' ),
-} )
-server.register( multipart, {
+})
+server.register(staticfile, {
+  root: path.resolve('./public'),
+})
+server.register(multipart, {
   limits: { fileSize: 1_048_576 },
-} )
-server.register( websocket, {
+})
+server.register(websocket, {
   options: { maxPayload: 1_048_576 },
-} )
+})
 server.setNotFoundHandler(
-  ( _, reply ) => reply.redirect( '/index.html' )
+  (_, reply) => reply.redirect('/index.html')
 )
 export default server

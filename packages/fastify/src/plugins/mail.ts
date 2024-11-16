@@ -2,16 +2,14 @@ import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import mailer from 'nodemailer'
 declare module 'fastify' {
-  interface FastifyInstance
-  {
+  interface FastifyInstance {
     mail: mailer.Transporter
   }
 }
 const mail: FastifyPluginAsync = fp(
-  async ( f ) =>
-  {
+  async (f) => {
     const testAccount = await mailer.createTestAccount()
-    const transporter = mailer.createTransport( {
+    const transporter = mailer.createTransport({
       host: 'smtp.ethereal.email',
       pool: true,
       port: 587,
@@ -20,11 +18,11 @@ const mail: FastifyPluginAsync = fp(
         user: testAccount.user,
         pass: testAccount.pass,
       },
-    } )
-    f.decorate( 'mail', transporter )
+    })
+    f.decorate('mail', transporter)
     f.addHook(
       'onClose',
-      ( f ) => f.mail.close()
+      (f) => f.mail.close()
     )
   }
 )

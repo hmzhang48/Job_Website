@@ -7,8 +7,7 @@ import type { InferInsertModel } from 'drizzle-orm'
 import { userInfo } from '../../lib/schema.ts'
 const idPattern = String.raw`^\d{17}[0-9Xx]$`
 const userinfo: FastifyPluginCallback = fp(
-  ( f, _, done ) =>
-  {
+  (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
       '/userinfo',
@@ -44,24 +43,23 @@ const userinfo: FastifyPluginCallback = fp(
                   additionalProperties: false,
                 },
               },
-              required: [ 'info' ],
+              required: ['info'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const info = await server.drizzle.query.userInfo
-          .findFirst( {
+          .findFirst({
             columns: { uuid: false },
-            where: eq( userInfo.uuid, request.user.uuid ),
-          } )
-          .catch( error => server.log.error( error ) )
-        if ( info )
-          reply.send( { info: info } )
+            where: eq(userInfo.uuid, request.user.uuid),
+          })
+          .catch(error => server.log.error(error))
+        if (info)
+          reply.send({ info: info })
         else
-          reply.code( 404 ).send()
+          reply.code(404).send()
       },
     )
     server.post(
@@ -86,29 +84,28 @@ const userinfo: FastifyPluginCallback = fp(
               },
               avatar: { type: 'string' },
             },
-            required: [ 'name', 'id', 'location', 'phone', 'avatar' ],
+            required: ['name', 'id', 'location', 'phone', 'avatar'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
-        const source = Object.create( null ) as InferInsertModel<typeof userInfo>
+      async (request, reply) => {
+        const source = Object.create(null) as InferInsertModel<typeof userInfo>
         source.uuid = request.user.uuid
-        Object.assign( source, request.body )
+        Object.assign(source, request.body)
         const result = await server.drizzle
-          .insert( userInfo ).values( source )
-          .then( () => true )
-          .catch( error => server.log.error( error ) )
-        reply.send( { result: !!result } )
+          .insert(userInfo).values(source)
+          .then(() => true)
+          .catch(error => server.log.error(error))
+        reply.send({ result: !!result })
       },
     )
     server.patch(
@@ -133,30 +130,28 @@ const userinfo: FastifyPluginCallback = fp(
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
-        const source = Object.create( null ) as { location?: string, phone?: string }
-        if ( request.body.location )
+      async (request, reply) => {
+        const source = Object.create(null) as { location?: string, phone?: string }
+        if (request.body.location)
           source.location = request.body.location
-        if ( request.body.phone )
+        if (request.body.phone)
           source.phone = request.body.phone
-        if ( Object.keys( source ).length > 0 )
-        {
+        if (Object.keys(source).length > 0) {
           const result = await server.drizzle
-            .update( userInfo ).set( source )
-            .where( eq( userInfo.uuid, request.user.uuid ) )
-            .then( () => true )
-            .catch( error => server.log.error( error ) )
-          reply.send( { result: !!result } )
+            .update(userInfo).set(source)
+            .where(eq(userInfo.uuid, request.user.uuid))
+            .then(() => true)
+            .catch(error => server.log.error(error))
+          reply.send({ result: !!result })
         }
         else
-          reply.code( 400 ).send()
+          reply.code(400).send()
       },
     )
     done()

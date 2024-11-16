@@ -15,85 +15,75 @@
   const emits = defineEmits<{
     exist: []
   }>()
-  let invalid = ref( Object.create( null ) as Record<string, boolean> )
-  let name = ref( '' )
-  const checkName = () => invalid.value[ 'name' ] = ( name.value === '' )
-  let origin = await loadImage( imgURL )
-  let canvas = useTemplateRef( 'canvas' )
-  let image = useCanvas( canvas, origin )
+  let invalid = ref(Object.create(null) as Record<string, boolean>)
+  let name = ref('')
+  const checkName = () => invalid.value['name'] = (name.value === '')
+  let origin = await loadImage(imgURL)
+  let canvas = useTemplateRef('canvas')
+  let image = useCanvas(canvas, origin)
   let logo = ref<File>()
-  let logoInput = useTemplateRef( 'logoInput' )
+  let logoInput = useTemplateRef('logoInput')
   watch(
     logo,
-    async () =>
-    {
-      if ( logo.value )
-        image.value = await loadImage( logo.value )
+    async () => {
+      if (logo.value)
+        image.value = await loadImage(logo.value)
     }
   )
-  const getLogo = () =>
-  {
+  const getLogo = () => {
     return new Promise(
-      ( resolve: ( value: File ) => void ) =>
-      {
+      (resolve: (value: File) => void) => {
         canvas.value?.toBlob(
-          ( blob ) =>
-          {
-            if ( blob )
-              resolve( new File( [ blob ], 'logo.png', { type: 'image/png' } ) )
+          (blob) => {
+            if (blob)
+              resolve(new File([blob], 'logo.png', { type: 'image/png' }))
           }
         )
       }
     )
   }
-  const checkLogo = () =>
-  {
-    const file = logoInput.value?.files?.[ 0 ]
-    invalid.value[ 'logo' ] = !( file && file.size < 1_024_000 )
-    if ( !invalid.value[ 'logo' ] )
+  const checkLogo = () => {
+    const file = logoInput.value?.files?.[0]
+    invalid.value['logo'] = !(file && file.size < 1_024_000)
+    if (!invalid.value['logo'])
       logo.value = file
   }
-  let brief = ref( '' )
-  const checkBrief = () =>
-  {
-    invalid.value[ 'brief' ] = ( brief.value === '' )
-    return !invalid.value[ 'brief' ]
+  let brief = ref('')
+  const checkBrief = () => {
+    invalid.value['brief'] = (brief.value === '')
+    return !invalid.value['brief']
   }
-  const keys = new Set( [ 'name', 'brief' ] )
-  const check = () =>
-  {
-    for ( let key of keys )
-    {
-      if ( invalid.value[ key ] === undefined )
-        invalid.value[ key ] = true
-      if ( invalid.value[ key ] )
+  const keys = new Set(['name', 'brief'])
+  const check = () => {
+    for (let key of keys) {
+      if (invalid.value[key] === undefined)
+        invalid.value[key] = true
+      if (invalid.value[key])
         return false
     }
     return true
   }
-  let loading = ref( false )
-  const submit = async () =>
-  {
-    if ( check() )
-    {
+  let loading = ref(false)
+  const submit = async () => {
+    if (check()) {
       loading.value = true
       let result
       const logo = await getLogo()
       const formData = new FormData()
-      formData.append( 'logo', logo )
-      const fileName = await uploadImage( formData )
-      if ( fileName )
-        result = await postCorpInfo( {
+      formData.append('logo', logo)
+      const fileName = await uploadImage(formData)
+      if (fileName)
+        result = await postCorpInfo({
           corpName: name.value,
           logo: fileName,
           corpId: props.corpId,
           brief: brief.value,
           chiefHR: props.hrId,
-        } )
-      if ( result )
-        emits( 'exist' )
+        })
+      if (result)
+        emits('exist')
       else
-        showModel( '请重试' )
+        showModel('请重试')
       loading.value = false
     }
   }
@@ -105,14 +95,14 @@
     <label for="name">企业名</label>
     <input
       id="name"
-      v-model.lazy=" name "
+      v-model.lazy="name"
       type="text"
       placeholder="请输入企业全称"
       required
-      :aria-invalid=" invalid[ 'name' ] "
-      @change=" checkName "
+      :aria-invalid="invalid['name']"
+      @change="checkName"
     >
-    <small v-show=" invalid[ 'name' ] ">企业全称格式有误</small>
+    <small v-show="invalid['name']">企业全称格式有误</small>
     <label for="logo">企业Logo</label>
     <div class="grid">
       <div>
@@ -121,9 +111,9 @@
           ref="logoInput"
           type="file"
           accept="image/*"
-          @change=" checkLogo "
+          @change="checkLogo"
         >
-        <small v-show=" invalid[ 'logo' ] ">头像图片需小于1MB</small>
+        <small v-show="invalid['logo']">头像图片需小于1MB</small>
       </div>
       <canvas
         id="canvas"
@@ -137,24 +127,24 @@
       id="corpid"
       type="text"
       disabled
-      :placeholder=" corpId "
+      :placeholder="corpId"
     >
     <label for="brief">企业介绍</label>
     <textarea
       id="phone"
-      v-model.lazy=" brief "
+      v-model.lazy="brief"
       type="text"
       placeholder="请介绍一下企业的基本情况"
       rows="10"
       required
-      :aria-invalid=" invalid[ 'brief' ] "
-      @change=" checkBrief "
+      :aria-invalid="invalid['brief']"
+      @change="checkBrief"
     />
-    <small v-show=" invalid[ 'brief' ] ">企业介绍格式有误</small>
+    <small v-show="invalid['brief']">企业介绍格式有误</small>
     <div class="button">
       <button
-        :aria-busy=" loading "
-        @click.prevent=" submit "
+        :aria-busy="loading"
+        @click.prevent="submit"
       >
         完成
       </button>

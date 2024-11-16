@@ -2,9 +2,8 @@ import test from 'ava'
 import server from '../server.ts'
 test(
   'test',
-  ( t ) =>
-  {
+  (t) => {
     server.inject()
-    t.teardown( () => server.close() )
+    t.teardown(() => server.close())
   }
 )

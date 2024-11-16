@@ -8,62 +8,54 @@
   const modalStore = useModalStore()
   const validStore = useValidStore()
   const { showModel } = modalStore
-  const { cvState } = storeToRefs( validStore )
-  let info = inject( infoKey )
-  let update = inject( updateKey, () => ( {} ) )
-  const url = import.meta.env.PROD ? `https://${ import.meta.env.VITE_AZURE_STORAGE_ACCOUNT }.blob.core.windows.net` : ''
-  let src = computed( () =>
-    info?.value[ 'cv' ] ? `${ url }/pdf/${ info.value[ 'cv' ] }.pdf` : '',
+  const { cvState } = storeToRefs(validStore)
+  let info = inject(infoKey)
+  let update = inject(updateKey, () => ({}))
+  const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  let src = computed(() =>
+    info?.value['cv'] ? `${url}/pdf/${info.value['cv']}.pdf` : '',
   )
-  let embed = useTemplateRef( 'embed' )
+  let embed = useTemplateRef('embed')
   onMounted(
-    () =>
-    {
-      if ( info?.value[ 'cv' ] && embed.value )
-      {
+    () => {
+      if (info?.value['cv'] && embed.value) {
         embed.value.src = src.value
         preview.value = true
       }
     }
   )
-  let fileInput = useTemplateRef( 'fileInput' )
+  let fileInput = useTemplateRef('fileInput')
   let newCv = ref<File>()
-  let wrong = ref( false )
-  let preview = ref( false )
-  const checkFile = () =>
-  {
-    let file = fileInput.value?.files?.[ 0 ]
-    if ( embed.value && file && file.size <= 5_242_880 )
-    {
+  let wrong = ref(false)
+  let preview = ref(false)
+  const checkFile = () => {
+    let file = fileInput.value?.files?.[0]
+    if (embed.value && file && file.size <= 5_242_880) {
       wrong.value = false
       newCv.value = file
-      embed.value.src = URL.createObjectURL( file )
+      embed.value.src = URL.createObjectURL(file)
       preview.value = true
     }
-    else
-    {
+    else {
       newCv.value = undefined
       wrong.value = true
       preview.value = false
     }
   }
-  let loading = ref( false )
-  const upload = async () =>
-  {
-    if ( newCv.value )
-    {
+  let loading = ref(false)
+  const upload = async () => {
+    if (newCv.value) {
       loading.value = true
       const formData = new FormData()
-      formData.append( 'cv', newCv.value )
-      const fileName = await uploadCv( formData )
-      if ( fileName )
-      {
-        showModel( '简历上传成功' )
+      formData.append('cv', newCv.value)
+      const fileName = await uploadCv(formData)
+      if (fileName) {
+        showModel('简历上传成功')
         cvState.value = true
-        update( 'cv', fileName )
+        update('cv', fileName)
       }
       else
-        showModel( '请重试' )
+        showModel('请重试')
       loading.value = false
     }
     else
@@ -79,11 +71,11 @@
       name="file"
       type="file"
       accept="application/pdf"
-      @change=" checkFile "
+      @change="checkFile"
     >
-    <small v-show=" wrong ">"简历PDF需小于5MB"</small>
+    <small v-show="wrong">"简历PDF需小于5MB"</small>
     <embed
-      v-show=" preview "
+      v-show="preview"
       ref="embed"
       type="application/pdf"
       width="100%"
@@ -91,8 +83,8 @@
     >
     <div class="button">
       <button
-        :aria-busy=" loading "
-        @click.prevent=" upload "
+        :aria-busy="loading"
+        @click.prevent="upload"
       >
         上传
       </button>

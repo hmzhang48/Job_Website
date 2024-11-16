@@ -8,8 +8,7 @@ import { eq } from 'drizzle-orm'
 import type { InferInsertModel } from 'drizzle-orm'
 import { users } from '../../lib/schema.ts'
 const register: FastifyPluginCallback = fp(
-  ( f, _, done ) =>
-  {
+  (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
       '/email-check',
@@ -23,28 +22,27 @@ const register: FastifyPluginCallback = fp(
                 format: 'email',
               },
             },
-            required: [ 'email' ],
+            required: ['email'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const user = await server.drizzle.query.users
-          .findFirst( {
+          .findFirst({
             columns: { email: true },
-            where: eq( users.email, request.query.email ),
-          } )
-          .catch( error => server.log.info( error ) )
-        reply.send( { result: !!user } )
+            where: eq(users.email, request.query.email),
+          })
+          .catch(error => server.log.info(error))
+        reply.send({ result: !!user })
       },
     )
     server.get(
@@ -59,23 +57,22 @@ const register: FastifyPluginCallback = fp(
                 format: 'email',
               },
             },
-            required: [ 'email' ],
+            required: ['email'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'string' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const address = request.query.email
-        const code = random( { length: 10 } )
+        const code = random({ length: 10 })
         const message = {
           from: 'Haomin Zhang <zhanghaomin@ethereal.email>',
           to: address,
@@ -84,25 +81,23 @@ const register: FastifyPluginCallback = fp(
         }
         let result: boolean
         result = await server.mail.verify()
-          .then( () => true )
+          .then(() => true)
           .catch(
-            error =>
-            {
-              server.log.error( error )
+            error => {
+              server.log.error(error)
               return false
             }
           )
-        if ( result && server.mail.isIdle() )
-          result = await server.mail.sendMail( message )
-            .then( () => true )
+        if (result && server.mail.isIdle())
+          result = await server.mail.sendMail(message)
+            .then(() => true)
             .catch(
-              error =>
-              {
-                server.log.error( error )
+              error => {
+                server.log.error(error)
                 return false
               }
             )
-        reply.send( { result: result ? code : '' } )
+        reply.send({ result: result ? code : '' })
       },
     )
     server.get(
@@ -117,25 +112,24 @@ const register: FastifyPluginCallback = fp(
                 pattern: String.raw`^\d{11}$`,
               },
             },
-            required: [ 'phone' ],
+            required: ['phone'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'string' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const phone = request.query.phone
-        server.log.info( phone )
-        const code = random( { length: 10 } )
-        reply.send( { result: code } )
+        server.log.info(phone)
+        const code = random({ length: 10 })
+        reply.send({ result: code })
       },
     )
     server.post(
@@ -156,47 +150,45 @@ const register: FastifyPluginCallback = fp(
               },
               hr: { type: 'boolean' },
             },
-            required: [ 'email', 'password', 'hr' ],
+            required: ['email', 'password', 'hr'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const uuid = crypto.randomUUID()
-        const hash = crypto.createHash( 'md5' )
-        hash.update( request.body.password )
-        const password = hash.digest( 'hex' )
-        const source = Object.create( null ) as InferInsertModel<typeof users>
+        const hash = crypto.createHash('md5')
+        hash.update(request.body.password)
+        const password = hash.digest('hex')
+        const source = Object.create(null) as InferInsertModel<typeof users>
         source.uuid = uuid
         source.email = request.body.email
         source.password = password
         source.hr = request.body.hr
         const result = await server.drizzle
-          .insert( users ).values( source )
-          .then( () => true )
-          .catch( error => server.log.error( error ) )
-        if ( result )
-        {
-          const token = await reply.jwtSign( {
+          .insert(users).values(source)
+          .then(() => true)
+          .catch(error => server.log.error(error))
+        if (result) {
+          const token = await reply.jwtSign({
             uuid: uuid, hr: request.body.hr,
-          } )
+          })
           reply
-            .setCookie( 'jwt', token, {
+            .setCookie('jwt', token, {
               path: '/', httpOnly: true, sameSite: true, signed: true,
-            } )
-            .send( { result: true } )
+            })
+            .send({ result: true })
         }
         else
-          reply.send( { result: false } )
+          reply.send({ result: false })
       },
     )
     done()

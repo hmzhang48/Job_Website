@@ -6,8 +6,7 @@ import crypto from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { users } from '../../lib/schema.ts'
 const reset: FastifyPluginCallback = fp(
-  ( f, _, done ) =>
-  {
+  (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.patch(
       '/email-reset',
@@ -21,27 +20,26 @@ const reset: FastifyPluginCallback = fp(
                 format: 'email',
               },
             },
-            required: [ 'email' ],
+            required: ['email'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
-        const result = await server.drizzle.update( users )
-          .set( { email: request.body.email } )
-          .where( eq( users.uuid, request.user.uuid ) )
-          .then( () => true )
-          .catch( error => server.log.error( error ) )
-        reply.send( { result: !!result } )
+      async (request, reply) => {
+        const result = await server.drizzle.update(users)
+          .set({ email: request.body.email })
+          .where(eq(users.uuid, request.user.uuid))
+          .then(() => true)
+          .catch(error => server.log.error(error))
+        reply.send({ result: !!result })
       },
     )
     server.patch(
@@ -62,53 +60,50 @@ const reset: FastifyPluginCallback = fp(
                 maxLength: 25,
               },
             },
-            required: [ 'oldPassword', 'newPassword' ],
+            required: ['oldPassword', 'newPassword'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
             200: {
               type: 'object',
               properties: {
-                result: { enum: [ '修改成功', '请重试', '密码错误' ] },
+                result: { enum: ['修改成功', '请重试', '密码错误'] },
               },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const user = await server.drizzle.query.users
-          .findFirst( {
+          .findFirst({
             columns: { password: true },
-            where: eq( users.uuid, request.user.uuid ),
-          } )
-          .catch( error => server.log.error( error ) )
-        if ( user )
-        {
-          const hash = crypto.createHash( 'md5' )
-          hash.update( request.body.oldPassword )
-          if ( hash.digest( 'hex' ) === user.password )
-          {
-            const hash = crypto.createHash( 'md5' )
-            hash.update( request.body.newPassword )
-            const password = hash.digest( 'hex' )
-            const result = await server.drizzle.update( users )
-              .set( { password: password } )
-              .where( eq( users.uuid, request.user.uuid ) )
-              .then( () => true )
-              .catch( error => server.log.error( error ) )
-            if ( result )
-              reply.send( { result: '修改成功' } )
+            where: eq(users.uuid, request.user.uuid),
+          })
+          .catch(error => server.log.error(error))
+        if (user) {
+          const hash = crypto.createHash('md5')
+          hash.update(request.body.oldPassword)
+          if (hash.digest('hex') === user.password) {
+            const hash = crypto.createHash('md5')
+            hash.update(request.body.newPassword)
+            const password = hash.digest('hex')
+            const result = await server.drizzle.update(users)
+              .set({ password: password })
+              .where(eq(users.uuid, request.user.uuid))
+              .then(() => true)
+              .catch(error => server.log.error(error))
+            if (result)
+              reply.send({ result: '修改成功' })
             else
-              reply.send( { result: '请重试' } )
+              reply.send({ result: '请重试' })
           }
           else
-            reply.send( { result: '密码错误' } )
+            reply.send({ result: '密码错误' })
         }
         else
-          reply.code( 401 ).send()
+          reply.code(401).send()
       },
     )
     done()

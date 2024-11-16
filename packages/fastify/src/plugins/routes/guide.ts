@@ -6,8 +6,7 @@ import crypto from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { users, userInfo, hrInfo } from '../../lib/schema.ts'
 const guide: FastifyPluginCallback = fp(
-  ( f, _, done ) =>
-  {
+  (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.post(
       '/login',
@@ -26,7 +25,7 @@ const guide: FastifyPluginCallback = fp(
                 maxLength: 25,
               },
             },
-            required: [ 'email', 'password' ],
+            required: ['email', 'password'],
             additionalProperties: false,
           } as const satisfies JSONSchema,
           response: {
@@ -36,41 +35,38 @@ const guide: FastifyPluginCallback = fp(
                 result: { type: 'boolean' },
                 hr: { type: 'boolean' },
               },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
+      async (request, reply) => {
         const user = await server.drizzle.query.users
-          .findFirst( {
+          .findFirst({
             columns: { email: false },
-            where: eq( users.email, request.body.email ),
-          } )
-          .catch( error => server.log.error( error ) )
-        if ( user )
-        {
-          const hash = crypto.createHash( 'md5' )
-          hash.update( request.body.password )
-          const password = hash.digest( 'hex' )
-          if ( password === user.password )
-          {
+            where: eq(users.email, request.body.email),
+          })
+          .catch(error => server.log.error(error))
+        if (user) {
+          const hash = crypto.createHash('md5')
+          hash.update(request.body.password)
+          const password = hash.digest('hex')
+          if (password === user.password) {
             const token = await reply.jwtSign(
               { uuid: user.uuid, hr: user.hr },
             )
             reply
-              .setCookie( 'jwt', token, {
+              .setCookie('jwt', token, {
                 path: '/', httpOnly: true, sameSite: true, signed: true,
-              } )
-              .send( { result: true, hr: user.hr } )
+              })
+              .send({ result: true, hr: user.hr })
           }
           else
-            reply.send( { result: false } )
+            reply.send({ result: false })
         }
         else
-          reply.code( 401 ).send()
+          reply.code(401).send()
       },
     )
     server.get(
@@ -81,17 +77,16 @@ const guide: FastifyPluginCallback = fp(
             200: {
               type: 'object',
               properties: { result: { type: 'boolean' } },
-              required: [ 'result' ],
+              required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( _request, reply ) =>
-      {
+      async (_request, reply) => {
         reply
-          .clearCookie( 'jwt', { path: '/' } )
-          .send( { result: true } )
+          .clearCookie('jwt', { path: '/' })
+          .send({ result: true })
       },
     )
     server.get(
@@ -106,25 +101,24 @@ const guide: FastifyPluginCallback = fp(
                 hr: { type: 'boolean' },
                 guide: { type: 'boolean' },
               },
-              required: [ 'hr', 'guide' ],
+              required: ['hr', 'guide'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
           },
         },
       },
-      async ( request, reply ) =>
-      {
-        const info = await ( request.user.hr
-          ? server.drizzle.query.hrInfo.findFirst( {
+      async (request, reply) => {
+        const info = await (request.user.hr
+          ? server.drizzle.query.hrInfo.findFirst({
             columns: { uuid: true },
-            where: eq( hrInfo.uuid, request.user.uuid ),
-          } )
-          : server.drizzle.query.userInfo.findFirst( {
+            where: eq(hrInfo.uuid, request.user.uuid),
+          })
+          : server.drizzle.query.userInfo.findFirst({
             columns: { uuid: true },
-            where: eq( userInfo.uuid, request.user.uuid ),
-          } ) )
-          .catch( error => server.log.error( error ) )
-        reply.send( { hr: request.user.hr, guide: info ? false : true } )
+            where: eq(userInfo.uuid, request.user.uuid),
+          }))
+          .catch(error => server.log.error(error))
+        reply.send({ hr: request.user.hr, guide: info ? false : true })
       },
     )
     done()

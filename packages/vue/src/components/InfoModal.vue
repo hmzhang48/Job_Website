@@ -3,30 +3,26 @@
   import { storeToRefs } from 'pinia'
   import { useModalStore } from '../stores/modalStore.ts'
   const modalStore = useModalStore()
-  const { modalState, confirmState, message, footerState } = storeToRefs( modalStore )
-  let open = ref( false )
+  const { modalState, confirmState, message, footerState } = storeToRefs(modalStore)
+  let open = ref(false)
   watch(
     modalState,
-    () =>
-    {
-      if ( modalState.value )
-      {
+    () => {
+      if (modalState.value) {
         const html = document.documentElement
-        html.classList.add( 'modal-is-open', 'modal-is-opening' )
+        html.classList.add('modal-is-open', 'modal-is-opening')
         setTimeout(
-          () => html.classList.remove( 'modal-is-opening' ),
+          () => html.classList.remove('modal-is-opening'),
           400
         )
         open.value = true
       }
-      else
-      {
+      else {
         const html = document.documentElement
-        html.classList.add( 'modal-is-closing' )
+        html.classList.add('modal-is-closing')
         setTimeout(
-          () =>
-          {
-            html.classList.remove( 'modal-is-open', 'modal-is-closing' )
+          () => {
+            html.classList.remove('modal-is-open', 'modal-is-closing')
             message.value = ''
             footerState.value = false
             open.value = false
@@ -36,8 +32,7 @@
       }
     }
   )
-  const setState = ( value: boolean ) =>
-  {
+  const setState = (value: boolean) => {
     modalState.value = false
     confirmState.value = value
   }
@@ -46,7 +41,7 @@
 <template>
   <dialog
     id="modal"
-    :open=" open "
+    :open="open"
   >
     <article>
       <header>
@@ -55,19 +50,19 @@
           class="close"
           aria-label="Close"
           data-target="modal"
-          @click.prevent="setState( false )"
+          @click.prevent="setState(false)"
         />
         <strong>请注意</strong>
       </header>
       <p>
         <slot />
       </p>
-      <footer v-if=" footerState ">
+      <footer v-if="footerState">
         <a
           href="#confirm"
           role="button"
           data-target="modal"
-          @click.prevent="setState( true )"
+          @click.prevent="setState(true)"
         >
           确认
         </a>
@@ -75,7 +70,7 @@
           href="#withdraw"
           role="button"
           data-target="modal"
-          @click.prevent="setState( false )"
+          @click.prevent="setState(false)"
         >
           取消
         </a>
