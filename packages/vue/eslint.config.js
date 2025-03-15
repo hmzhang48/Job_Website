@@ -4,7 +4,7 @@ import unicorn from 'eslint-plugin-unicorn'
 import vue from 'eslint-plugin-vue'
 export default tslint.config(
   eslint.configs.recommended,
-  unicorn.configs['flat/recommended'],
+  unicorn.configs['recommended'],
   ...tslint.configs.recommended,
   ...vue.configs['flat/recommended'],
   {

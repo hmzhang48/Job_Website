@@ -14,8 +14,8 @@ declare module 'fastify' {
 }
 const database: FastifyPluginCallback = fp(
   (f, _, done) => {
-    const client = env['POSTGRESQL_URL']
-      ? postgres(env['POSTGRESQL_URL'])
+    const client = env['DB_URL']
+      ? postgres(env['DB_URL'])
       : postgres({
         host: env['AZURE_POSTGRESQL_HOST']!,
         port: Number.parseInt(env['AZURE_POSTGRESQL_PORT']!),
