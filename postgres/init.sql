@@ -1,9 +1,3 @@
-DROP TABLE infobox;
-DROP TABLE jobinfo;
-DROP TABLE hrinfo;
-DROP TABLE corpinfo;
-DROP TABLE userinfo;
-DROP TABLE users;
 CREATE TABLE users (
     email     text NOT NULL,
     password  text NOT NULL,
