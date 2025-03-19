@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue"
 export default defineConfig({
   build: {
     target: "esnext",
-    outDir: "../fastify/dist",
+    outDir: "../fastify/public",
   },
   server: {
     proxy: {

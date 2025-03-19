@@ -5,7 +5,7 @@ services:
       - ./postgres/.env
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d
+      - ./postgres/initdb:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
   fastify:

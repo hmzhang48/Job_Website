@@ -4,9 +4,13 @@ WORKDIR /app
 
 COPY package.json .
 
-RUN npm install
+ARG NODE_ENV=production
+
+RUN npm install --omit=dev
 
 COPY dist dist/
+
+COPY public public/
 
 EXPOSE 3000
 
