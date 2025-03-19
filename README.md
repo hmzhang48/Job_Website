@@ -4,6 +4,6 @@
 
 - The back-end **RESTful APIs** are developed with **Node.js** framework **Fastify**, utilizing **JSON Web Token** for authentication, **JSON schema** for validation, **Server-sent events** for notification, and **Drizzle ORM** to interact with relational database **PostgreSQL**.
 
-- The project is tested in **Linux** containers, employing **Docker Compose**.
+- The project is tested in **Linux Container**, employing **Docker Compose**.
 
 - The website is deployed on **Azure App Service**, integrating **Azure Blob Storage**.
