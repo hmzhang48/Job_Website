@@ -1,16 +1,12 @@
 {
-  "name": "server",
+  "name": "job_website",
   "version": "0.0.0",
-  "description": "built on Fastify",
+  "description": "built on Fastify and Vue",
   "author": "hmzhang48",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "dev": "tsx watch ./src/app.ts",
-    "test": "ava --watch ./src/test/test.ts",
-    "build": "node ./build.js"
+    "start": "node ./server/app.js"
   },
   "dependencies": {
     "@azure/identity": "^4.8.0",
@@ -43,15 +39,5 @@
     "pino-pretty": "^13.0.0",
     "postgres": "^3.4.5",
     "ws": "^8.18.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.13.10",
-    "@types/nodemailer": "^6.4.17",
-    "@types/pg": "^8.11.11",
-    "@types/ws": "^8.18.0",
-    "ava": "^6.2.0",
-    "drizzle-kit": "^0.30.5",
-    "esbuild": "^0.25.1",
-    "tsx": "^4.19.3"
   }
 }

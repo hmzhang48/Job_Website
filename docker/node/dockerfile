@@ -8,9 +8,7 @@ ARG NODE_ENV=production
 
 RUN npm install --omit=dev
 
-COPY dist dist/
-
-COPY public public/
+COPY app .
 
 EXPOSE 3000
 
