@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 declare module '@fastify/jwt' {
   interface FastifyJWT {
@@ -27,7 +26,7 @@ const urlCheck = (url: string) => {
     if (url.endsWith(f)) return false
   return true
 }
-const auth: FastifyPluginCallback = fp(
+const auth = fp(
   (f, _, done) => {
     f.addHook(
       'preValidation',

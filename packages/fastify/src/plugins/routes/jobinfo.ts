@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
@@ -8,7 +7,7 @@ import { userInfo, hrInfo, corpInfo, jobInfo } from '../../lib/schema.ts'
 const corpIDPattern
   = String.raw`^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$`
 const salaryPattern = String.raw`^\[[0-9]+(\.[0-9]{1,3})?,[0-9]+(\.[0-9]{1,3})?\]$`
-const jobinfo: FastifyPluginCallback = fp(
+const jobinfo = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(

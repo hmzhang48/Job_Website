@@ -1,21 +1,22 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
 import { eq, desc, and } from 'drizzle-orm'
 import { infoBox } from '../../lib/schema.ts'
-const infobox: FastifyPluginCallback = fp(
+const infobox = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider<{
-      deserialize: [
-        {
-          pattern: {
-            type: 'string'
-            format: 'date-time'
-          }
-          output: Date
-        },
-      ]
+      SerializerSchemaOptions: {
+        deserialize: [
+          {
+            pattern: {
+              type: 'string'
+              format: 'date-time'
+            }
+            output: Date
+          },
+        ]
+      }
     }>>()
     server.get(
       '/infobox',

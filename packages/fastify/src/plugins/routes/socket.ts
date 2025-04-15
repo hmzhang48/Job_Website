@@ -1,6 +1,5 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
-const socket: FastifyPluginCallback = fp(
+const socket = fp(
   (f, _, done) => {
     f.get(
       '/ws',

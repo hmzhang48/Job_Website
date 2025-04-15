@@ -1,4 +1,4 @@
-import { User } from '../interface.ts'
+import type { User } from '../interface.ts'
 export const login = async (user: Omit<User, 'hr'>) =>
   fetch(
     '/login',

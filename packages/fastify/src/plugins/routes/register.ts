@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
@@ -7,7 +6,7 @@ import random from 'crypto-random-string'
 import { eq } from 'drizzle-orm'
 import type { InferInsertModel } from 'drizzle-orm'
 import { users } from '../../lib/schema.ts'
-const register: FastifyPluginCallback = fp(
+const register = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(

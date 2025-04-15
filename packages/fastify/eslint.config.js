@@ -8,7 +8,7 @@ export default tslint.config(
   {
     languageOptions: {
       parserOptions: {
-        project: true
+        projectService: true
       }
     }
   }

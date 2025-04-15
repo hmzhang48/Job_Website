@@ -1,4 +1,4 @@
-import { userInfo } from '../interface.ts'
+import type { userInfo } from '../interface.ts'
 export const getUserInfo = async () =>
   fetch(
     '/userinfo',

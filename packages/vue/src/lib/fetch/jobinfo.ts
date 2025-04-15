@@ -1,4 +1,4 @@
-import { jobInfo, jobItem } from '../interface.ts'
+import type { jobInfo, jobItem } from '../interface.ts'
 export const getJobList = async (c: Record<string, string | number>) => {
   let url = '/jobinfo?'
   for (const [key, value] of Object.entries(c))

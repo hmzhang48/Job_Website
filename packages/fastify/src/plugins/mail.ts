@@ -1,4 +1,3 @@
-import type { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import mailer from 'nodemailer'
 declare module 'fastify' {
@@ -6,7 +5,7 @@ declare module 'fastify' {
     mail: mailer.Transporter
   }
 }
-const mail: FastifyPluginAsync = fp(
+const mail = fp(
   async (f) => {
     const testAccount = await mailer.createTestAccount()
     const transporter = mailer.createTransport({

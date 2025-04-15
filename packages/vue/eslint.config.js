@@ -11,9 +11,8 @@ export default tslint.config(
     languageOptions: {
       parserOptions: {
         parser: tslint.parser,
-        project: true,
+        projectService: true,
         extraFileExtensions: [".vue"],
-        sourceType: "module"
       }
     },
     rules: {

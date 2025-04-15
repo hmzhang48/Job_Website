@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { MultipartFile } from '@fastify/multipart'
 import { BlobServiceClient } from '@azure/storage-blob'
@@ -12,7 +11,7 @@ declare module 'fastify' {
     deleteFile: (fileType: string, fileName: string) => Promise<void>
   }
 }
-const file: FastifyPluginCallback = fp(
+const file = fp(
   (f, _, done) => {
     if (env['AZURE_STORAGE_ACCOUNT_NAME']) {
       const blobServiceClient = new BlobServiceClient(

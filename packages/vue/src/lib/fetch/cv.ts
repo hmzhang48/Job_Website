@@ -1,4 +1,4 @@
-import { cvItem } from '../interface.ts'
+import type { cvItem } from '../interface.ts'
 export const uploadCv = async (formData: FormData) =>
   fetch(
     '/cv',

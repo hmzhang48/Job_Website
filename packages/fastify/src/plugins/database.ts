@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
@@ -12,16 +11,16 @@ declare module 'fastify' {
     drizzle: PostgresJsDatabase<typeof schema>
   }
 }
-const database: FastifyPluginCallback = fp(
+const database = fp(
   (f, _, done) => {
     const client = env['DB_URL']
       ? postgres(env['DB_URL'])
       : postgres({
-        host: env['AZURE_POSTGRESQL_HOST']!,
+        host: env['AZURE_POSTGRESQL_HOST'],
         port: Number.parseInt(env['AZURE_POSTGRESQL_PORT']!),
         database: env['AZURE_POSTGRESQL_DATABASE']!,
-        username: env['AZURE_POSTGRESQL_USER']!,
-        password: env['AZURE_POSTGRESQL_PASSWORD']!,
+        username: env['AZURE_POSTGRESQL_USER'],
+        password: env['AZURE_POSTGRESQL_PASSWORD'],
         ssl: true,
       })
     f.decorate('postgres', client)

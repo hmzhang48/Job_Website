@@ -1,4 +1,4 @@
-import { hrInfo } from '../interface.ts'
+import type { hrInfo } from '../interface.ts'
 export const getHRInfo = async () =>
   fetch(
     '/hrinfo',

@@ -1,11 +1,10 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
 import crypto from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { users } from '../../lib/schema.ts'
-const reset: FastifyPluginCallback = fp(
+const reset = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.patch(

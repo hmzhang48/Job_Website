@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
@@ -6,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import type { InferInsertModel } from 'drizzle-orm'
 import { hrInfo, corpInfo } from '../../lib/schema.ts'
 const corpIDpattern = String.raw`^[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{2}\d{6}[0-9A-HJ-NPQRTUWXYa-hj-npqrtuwxy]{10}$`
-const corpinfo: FastifyPluginCallback = fp(
+const corpinfo = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(

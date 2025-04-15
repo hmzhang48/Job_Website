@@ -1,6 +1,5 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
-const event: FastifyPluginCallback = fp(
+const event = fp(
   (f, _, done) => {
     f.get(
       '/sse',

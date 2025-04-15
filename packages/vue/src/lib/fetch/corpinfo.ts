@@ -1,4 +1,4 @@
-import { hrInfo, corpInfo } from '../interface.ts'
+import type { hrInfo, corpInfo } from '../interface.ts'
 export const existCorp = async (corpid: string) =>
   fetch(
     '/corp-check?corpid=' + corpid,

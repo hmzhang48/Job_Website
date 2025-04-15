@@ -1,4 +1,4 @@
-import { infoItem } from '../interface.ts'
+import type { infoItem } from '../interface.ts'
 export const getInfoBox = async (offset: number, limit: number) =>
   fetch(
     `/infobox?offset=${offset.toString()}&limit=${limit.toString()}`,

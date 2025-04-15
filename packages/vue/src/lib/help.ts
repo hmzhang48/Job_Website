@@ -1,6 +1,6 @@
-import provinces from '../assets/provinces.json'
-import cities from '../assets/cities.json'
-import areas from '../assets/areas.json'
+import provinces from '../assets/provinces.json' with { type: "json" }
+import cities from '../assets/cities.json' with { type: "json" }
+import areas from '../assets/areas.json' with { type: "json" }
 
 export const initProvince = (province: HTMLSelectElement | null) => {
   if (province) {

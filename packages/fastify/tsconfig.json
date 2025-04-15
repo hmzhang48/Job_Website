@@ -1,6 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "include": [
-    "src/**/*.ts"
-  ]
+    "*.config.ts",
+    "src/**/*.ts",
+  ],
+  "compilerOptions": {
+    "outDir": "../../docker/node/app/"
+  }
 }

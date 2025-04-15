@@ -1,4 +1,3 @@
-import type { FastifyPluginCallback } from 'fastify'
 import fp from 'fastify-plugin'
 import type { JsonSchemaToTsProvider } from '@fastify/type-provider-json-schema-to-ts'
 import type { JSONSchema } from 'json-schema-to-ts'
@@ -6,7 +5,7 @@ import random from 'crypto-random-string'
 import { eq, and, arrayContains, inArray, sql } from 'drizzle-orm'
 import { userInfo, hrInfo, jobInfo, infoBox } from '../../lib/schema.ts'
 const datetimePattern = String.raw`^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}$`
-const cv: FastifyPluginCallback = fp(
+const cv = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.post(
