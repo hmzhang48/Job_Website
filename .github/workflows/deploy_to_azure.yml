@@ -18,6 +18,7 @@ jobs:
       - name: Install pnpm package manager
         uses: pnpm/action-setup@v4
         with:
+          version: latest
           run_install: true
 
       - name: Build & Test
