@@ -1,0 +1,74 @@
+name: Deploy to Azure
+
+on:
+  [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: latest
+
+      - name: Install pnpm package manager
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: true
+
+      - name: Build & Test
+        run: |
+          pnpm --filter server run build
+          pnpm --filter client run build
+
+      - name: Init release
+        run: |
+          mkdir -p release/public/{pdf,png} release/server
+          cp ./packages/fastify/{package.json,drizzle.config.js} release/
+          cp -r ./packages/fastify/dist/* release/server/
+          cp -r ./packages/vue/dist/* release/public/
+
+      - name: Zip artifact
+        run: |
+          zip release.zip ./release/* -r
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: job_website
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job_website
+
+      - name: Unzip artifact
+        run: unzip release.zip
+
+      - name: 'Deploy to Azure WebApp'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'production'
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      - name: Azure logout
+        run: |
+          az logout

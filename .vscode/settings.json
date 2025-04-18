@@ -1,0 +1,42 @@
+{
+  "eslint.ignoreUntitled": true,
+  "eslint.lintTask.enable": true,
+  "eslint.useESLintClass": true,
+  "eslint.useFlatConfig": true,
+  "eslint.problems.shortenToSingleLine": true,
+  "eslint.probe": [
+    "typescript",
+    "vue"
+  ],
+  "eslint.validate": [
+    "typescript",
+    "vue"
+  ],
+  "eslint.workingDirectories": [
+    {
+      "pattern": "./packages/*/"
+    }
+  ],
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "vue.autoInsert.dotValue": true,
+  "vue.format.script.initialIndent": true,
+  "vue.format.style.initialIndent": true,
+  "vue.inlayHints.destructuredProps": true,
+  "vue.inlayHints.inlineHandlerLeading": true,
+  "vue.inlayHints.missingProps": true,
+  "vue.inlayHints.optionsWrapper": true,
+  "vue.inlayHints.vBindShorthand": true,
+  "vue.server.hybridMode": true,
+  "vue.splitEditors.icon": true,
+  "vue.updateImportsOnFileMove.enabled": true,
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+}

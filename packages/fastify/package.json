@@ -10,7 +10,8 @@
     "migrate": "drizzle-kit migrate",
     "dev": "node ./src/app.ts",
     "test": "node --test",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node ./server/app.js"
   },
   "dependencies": {
     "@azure/identity": "^4.8.0",
