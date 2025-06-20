@@ -8,7 +8,7 @@ const reset = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.patch(
-      '/email-reset',
+      '/api/email-reset',
       {
         schema: {
           body: {
@@ -42,7 +42,7 @@ const reset = fp(
       },
     )
     server.patch(
-      '/password-reset',
+      '/api/password-reset',
       {
         schema: {
           body: {

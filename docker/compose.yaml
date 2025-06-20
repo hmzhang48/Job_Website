@@ -1,10 +1,10 @@
 services:
   database:
-    image: "postgres:17.4-alpine3.21"
+    image: "postgres:17.5-alpine"
     env_file:
       - ./postgres/.env
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - ./postgres/initdb:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
@@ -12,10 +12,27 @@ services:
     build: ./node
     env_file:
       - ./node/.env
+    volumes:
+      - ./node/server:/app/server
+      - ./caddy/root:/app/public
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
+      - database
+  proxy:
+    image: "caddy:2.10-alpine"
+    volumes:
+      - caddy-config:/config
+      - caddy-data:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/root:/usr/share/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - server
 
 volumes:
-  db-data:
+  postgres-data:
+  caddy-config:
+  caddy-data:

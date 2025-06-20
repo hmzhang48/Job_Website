@@ -9,7 +9,7 @@ const hrinfo = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
-      '/hrinfo',
+      '/api/hrinfo',
       {
         schema: {
           response: {
@@ -55,7 +55,7 @@ const hrinfo = fp(
       },
     )
     server.post(
-      '/hrinfo',
+      '/api/hrinfo',
       {
         schema: {
           body: {
@@ -108,7 +108,7 @@ const hrinfo = fp(
       },
     )
     server.patch(
-      '/hrinfo',
+      '/api/hrinfo',
       {
         schema: {
           body: {

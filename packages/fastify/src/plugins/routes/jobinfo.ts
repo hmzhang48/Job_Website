@@ -11,7 +11,7 @@ const jobinfo = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
-      '/jobinfo',
+      '/api/jobinfo',
       {
         schema: {
           querystring: {
@@ -154,7 +154,7 @@ const jobinfo = fp(
       },
     )
     server.post(
-      '/jobinfo',
+      '/api/jobinfo',
       {
         schema: {
           body: {
@@ -207,7 +207,7 @@ const jobinfo = fp(
       },
     )
     server.patch(
-      '/jobinfo',
+      '/api/jobinfo',
       {
         schema: {
           body: {
@@ -278,7 +278,7 @@ const jobinfo = fp(
       },
     )
     server.delete(
-      '/jobinfo',
+      '/api/jobinfo',
       {
         schema: {
           body: {

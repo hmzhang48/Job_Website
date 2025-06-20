@@ -30,7 +30,6 @@
   "vue.inlayHints.missingProps": true,
   "vue.inlayHints.optionsWrapper": true,
   "vue.inlayHints.vBindShorthand": true,
-  "vue.server.hybridMode": true,
   "vue.splitEditors.icon": true,
   "vue.updateImportsOnFileMove.enabled": true,
   "[vue]": {

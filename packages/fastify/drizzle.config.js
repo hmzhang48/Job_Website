@@ -12,6 +12,6 @@ export default defineConfig({
       password: env['AZURE_POSTGRESQL_PASSWORD'],
       ssl: true,
     },
-  schema: "./src/lib/schema.*",
+  schema: ["./src/lib/schema.ts", "./server/lib/schema.js"],
   out: "./migrations"
 })

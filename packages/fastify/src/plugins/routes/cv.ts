@@ -9,7 +9,7 @@ const cv = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.post(
-      '/cv',
+      '/api/cv',
       {
         schema: {
           response: {
@@ -55,7 +55,7 @@ const cv = fp(
       },
     )
     server.get(
-      '/cv-deliver',
+      '/api/cv-deliver',
       {
         schema: {
           querystring: {
@@ -107,7 +107,7 @@ const cv = fp(
       },
     )
     server.get(
-      '/cv-receive',
+      '/api/cv-receive',
       {
         schema: {
           querystring: {
@@ -174,7 +174,7 @@ const cv = fp(
       },
     )
     server.post(
-      '/cv-remove/:state',
+      '/api/cv-remove/:state',
       {
         schema: {
           params: {

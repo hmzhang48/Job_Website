@@ -35,7 +35,7 @@
       await stateCheck()
       if (userState.value && !guideState.value) {
         if (!event) {
-          event = new EventSource('/sse', { withCredentials: true })
+          event = new EventSource('/api/sse', { withCredentials: true })
           event.addEventListener('newInfo', () => newInfo.value++)
         }
       }

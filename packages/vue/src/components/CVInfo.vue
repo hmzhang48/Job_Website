@@ -2,6 +2,7 @@
   import { ref, inject, onMounted, computed, useTemplateRef } from 'vue'
   import { storeToRefs } from 'pinia'
   import { uploadCv } from '../lib/fetch/cv.ts'
+  import { getFileUrl } from '../lib/help.ts'
   import { infoKey, updateKey } from '../lib/inject.ts'
   import { useModalStore } from '../stores/modalStore.ts'
   import { useValidStore } from '../stores/validStore.ts'
@@ -11,7 +12,7 @@
   const { cvState } = storeToRefs(validStore)
   let info = inject(infoKey)
   let update = inject(updateKey, () => ({}))
-  const url = import.meta.env.PROD ? `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() =>
     info?.value['cv'] ? `${url}/pdf/${info.value['cv']}.pdf` : '',
   )

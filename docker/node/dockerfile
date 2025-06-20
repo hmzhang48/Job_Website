@@ -1,8 +1,8 @@
-FROM node:lts-alpine3.21
+FROM node:24.2-alpine
 
 WORKDIR /app
 
-COPY app .
+COPY package.json drizzle.config.js /app/
 
 ARG NODE_ENV=production
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { computed } from 'vue'
+  import { getFileUrl } from '../lib/help.ts'
   const props = defineProps<{
     hrState: boolean
     corpName: string
@@ -13,8 +14,7 @@
     sendCv: [no: number]
     getCv: [no: number]
   }>()
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() => `${url}/png/${props.logo}.png`)
 </script>
 

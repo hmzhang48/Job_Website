@@ -5,7 +5,7 @@
   import { getCorpInfo } from '../lib/fetch/corpinfo.ts'
   import { getJobList } from '../lib/fetch/jobinfo.ts'
   import { deliverCv } from '../lib/fetch/cv.ts'
-  import { trueType, trueLocation } from '../lib/help.ts'
+  import { trueType, trueLocation, getFileUrl } from '../lib/help.ts'
   import { useObserver } from '../lib/use.ts'
   import type { jobInfo, jobItem } from '../lib/interface.ts'
   import SearchBar from './SearchBar.vue'
@@ -94,8 +94,7 @@
   let corp = ref({
     show: false, corpName: '', logo: '', brief: '',
   })
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() =>
     corp.value.logo ? `${url}/png/${corp.value.logo}.png` : '',
   )

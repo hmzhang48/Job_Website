@@ -31,21 +31,21 @@ const server = fastify({
   },
 })
 server.register(sensible)
+const defaultSource = ['\'self\'', 'blob:']
+const imgSource = ['\'self\'', 'data:', 'blob:']
+const objectSource = ['\'self\'', 'blob:']
+if (env['AZURE_STORAGE_ACCOUNT_NAME']) {
+  const file_url = `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`
+  defaultSource.push(file_url)
+  imgSource.push(file_url)
+  objectSource.push(file_url)
+}
 server.register(helmet, {
   contentSecurityPolicy: {
     directives: {
-      'default-src': [
-        '\'self\'', 'blob:',
-        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
-      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 3 : 2),
-      'img-src': [
-        '\'self\'', 'data:', 'blob:',
-        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
-      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 4 : 3),
-      'object-src': [
-        '\'self\'', 'blob:',
-        `https://${env['AZURE_STORAGE_ACCOUNT_NAME']}.blob.core.windows.net`,
-      ].slice(0, env['AZURE_STORAGE_ACCOUNT_NAME'] ? 3 : 2),
+      'default-src': defaultSource,
+      'img-src': imgSource,
+      'object-src': objectSource,
     },
   },
 })

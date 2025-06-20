@@ -1,14 +1,14 @@
 import type { hrInfo, corpInfo } from '../interface.ts'
 export const existCorp = async (corpid: string) =>
   fetch(
-    '/corp-check?corpid=' + corpid,
+    '/api/corp-check?corpid=' + corpid,
     { method: 'GET', credentials: 'include' }
   )
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { result: boolean } | undefined) => value?.result)
 export const getCorpInfo = async (logo?: string) =>
   fetch(
-    `/corpinfo${logo ? '?logo=' + logo : ''}`,
+    `/api/corpinfo${logo ? '?logo=' + logo : ''}`,
     { method: 'GET', credentials: 'include' }
   )
     .then(response => (response.ok ? response.json() : undefined))
@@ -21,7 +21,7 @@ export const getCorpInfo = async (logo?: string) =>
     )
 export const postCorpInfo = async (corpInfo: corpInfo) =>
   fetch(
-    '/corpinfo',
+    '/api/corpinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

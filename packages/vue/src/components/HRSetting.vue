@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { ref, inject } from 'vue'
   import { hrListKey } from '../lib/inject.ts'
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  import { getFileUrl } from '../lib/help.ts'
+  const url = getFileUrl()
   let hrs = inject(hrListKey)
   let verify = ref(false)
 </script>

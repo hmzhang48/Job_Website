@@ -9,7 +9,7 @@ const corpinfo = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
-      '/corp-check',
+      '/api/corp-check',
       {
         schema: {
           querystring: {
@@ -44,7 +44,7 @@ const corpinfo = fp(
       },
     )
     server.get(
-      '/corpinfo',
+      '/api/corpinfo',
       {
         schema: {
           querystring: {
@@ -139,7 +139,7 @@ const corpinfo = fp(
       },
     )
     server.post(
-      '/corpinfo',
+      '/api/corpinfo',
       {
         schema: {
           body: {

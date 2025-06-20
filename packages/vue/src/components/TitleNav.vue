@@ -3,6 +3,7 @@
   import { storeToRefs } from 'pinia'
   import { logout } from '../lib/fetch/guide.ts'
   import { resetKey } from '../lib/inject.ts'
+  import { getFileUrl } from '../lib/help.ts'
   import { useUserStore } from '../stores/userStore.ts'
   import { useValidStore } from '../stores/validStore.ts'
   let userStore = useUserStore()
@@ -19,8 +20,7 @@
     updateInfo: []
   }>()
   watch(userState, () => (buttonState.value = userState.value ? 2 : 0))
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() =>
     props.avatar ? `${url}/png/${props.avatar}.png` : '',
   )
@@ -43,7 +43,7 @@
 <template>
   <nav>
     <ul>
-      <li><strong>精银聚</strong></li>
+      <li><strong>精银雇</strong></li>
     </ul>
     <ul>
       <li>
@@ -79,15 +79,9 @@
               </router-link>
             </li>
             <li>
-              <a
-                href=""
-                @click.prevent="() => emits('updateInfo')"
-              >
+              <a href="" @click.prevent="() => emits('updateInfo')">
                 信息箱
-                <span
-                  v-show="newInfo"
-                  class="badge"
-                >
+                <span v-show="newInfo" class="badge">
                   {{ newInfo }}
                 </span>
               </a>

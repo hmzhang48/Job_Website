@@ -3,7 +3,7 @@
   import { storeToRefs } from 'pinia'
   import { getJobList, deleteJob } from '../lib/fetch/jobinfo.ts'
   import { receiveCv, removeCv } from '../lib/fetch/cv.ts'
-  import { trueType, trueLocation } from '../lib/help.ts'
+  import { trueType, trueLocation, getFileUrl } from '../lib/help.ts'
   import { useObserver } from '../lib/use.ts'
   import { corpKey } from '../lib/inject.ts'
   import type { jobItem, jobInfo, cvItem } from '../lib/interface.ts'
@@ -71,8 +71,7 @@
         await searchJobs()
     }
   )
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() =>
     corp?.value['logo'] ? `${url}/png/${corp.value['logo']}.png` : '',
   )

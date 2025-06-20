@@ -62,3 +62,12 @@ export const loadImage = async (source: string | Blob) => {
     }
   )
 }
+
+export const getFileUrl = () => {
+  const env = import.meta.env
+  let url = ''
+  if (env.MODE === 'production') {
+    url = `https://${import.meta.env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
+  }
+  return url
+}

@@ -1,4 +1,5 @@
 import eslint from '@eslint/js'
+import globals from "globals"
 import tslint from 'typescript-eslint'
 import unicorn from 'eslint-plugin-unicorn'
 import vue from 'eslint-plugin-vue'
@@ -9,6 +10,9 @@ export default tslint.config(
   ...vue.configs['flat/recommended'],
   {
     languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
       parserOptions: {
         parser: tslint.parser,
         projectService: true,

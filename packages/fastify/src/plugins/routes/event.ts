@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 const event = fp(
   (f, _, done) => {
     f.get(
-      '/sse',
+      '/api/sse',
       async (request, reply) => {
         reply.raw.writeHead(200, {
           'Content-Type': 'text/event-stream; charset=utf-8',

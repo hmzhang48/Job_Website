@@ -8,7 +8,7 @@ const image = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.post(
-      '/image',
+      '/api/image',
       {
         schema: {
           response: {
@@ -33,7 +33,7 @@ const image = fp(
       },
     )
     server.patch(
-      '/image',
+      '/api/image',
       {
         schema: {
           querystring: {

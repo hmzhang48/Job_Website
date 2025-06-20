@@ -1,14 +1,14 @@
 import type { userInfo } from '../interface.ts'
 export const getUserInfo = async () =>
   fetch(
-    '/userinfo',
+    '/api/userinfo',
     { method: 'GET', credentials: 'include' }
   )
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { info: userInfo } | undefined) => value?.info)
 export const postUserInfo = async (userInfo: Omit<userInfo, 'cv' | 'valid'>) =>
   fetch(
-    '/userinfo',
+    '/api/userinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -20,7 +20,7 @@ export const postUserInfo = async (userInfo: Omit<userInfo, 'cv' | 'valid'>) =>
     .then((value: { result: boolean } | undefined) => value?.result)
 export const patchUserInfo = async (body: { phone?: string, location?: string }) =>
   fetch(
-    '/userinfo',
+    '/api/userinfo',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },

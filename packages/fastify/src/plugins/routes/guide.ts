@@ -8,7 +8,7 @@ const guide = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.post(
-      '/login',
+      '/api/login',
       {
         schema: {
           body: {
@@ -69,7 +69,7 @@ const guide = fp(
       },
     )
     server.get(
-      '/logout',
+      '/api/logout',
       {
         schema: {
           response: {
@@ -89,7 +89,7 @@ const guide = fp(
       },
     )
     server.get(
-      '/guide',
+      '/api/guide',
       {
         schema: {
           response: {

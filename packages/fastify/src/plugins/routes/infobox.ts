@@ -19,7 +19,7 @@ const infobox = fp(
       }
     }>>()
     server.get(
-      '/infobox',
+      '/api/infobox',
       {
         schema: {
           querystring: {
@@ -76,7 +76,7 @@ const infobox = fp(
       },
     )
     server.get(
-      '/infobox/:action',
+      '/api/infobox/:action',
       {
         schema: {
           params: {

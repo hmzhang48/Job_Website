@@ -1,14 +1,14 @@
 import type { hrInfo } from '../interface.ts'
 export const getHRInfo = async () =>
   fetch(
-    '/hrinfo',
+    '/api/hrinfo',
     { method: 'GET', credentials: 'include' }
   )
     .then(response => (response.ok ? response.json() : undefined))
     .then((value: { info: hrInfo } | undefined) => value?.info)
 export const postHRInfo = async (hrInfo: hrInfo) =>
   fetch(
-    '/hrinfo',
+    '/api/hrinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -20,7 +20,7 @@ export const postHRInfo = async (hrInfo: hrInfo) =>
     .then((value: { result: boolean } | undefined) => value?.result)
 export const patchHRInfo = async (phone?: string) =>
   fetch(
-    '/hrinfo',
+    '/api/hrinfo',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },

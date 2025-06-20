@@ -1,6 +1,6 @@
 export const resetMail = async (email: string) =>
   fetch(
-    '/email-reset',
+    '/api/email-reset',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -12,7 +12,7 @@ export const resetMail = async (email: string) =>
     .then((value: { result: boolean } | undefined) => value?.result)
 export const resetPassword = async (oldPassword: string, newPassword: string) =>
   fetch(
-    '/password-reset',
+    '/api/password-reset',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },

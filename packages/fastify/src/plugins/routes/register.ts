@@ -10,7 +10,7 @@ const register = fp(
   (f, _, done) => {
     const server = f.withTypeProvider<JsonSchemaToTsProvider>()
     server.get(
-      '/email-check',
+      '/api/email-check',
       {
         schema: {
           querystring: {
@@ -45,7 +45,7 @@ const register = fp(
       },
     )
     server.get(
-      '/email-validate',
+      '/api/email-validate',
       {
         schema: {
           querystring: {
@@ -100,7 +100,7 @@ const register = fp(
       },
     )
     server.get(
-      '/phone-validate',
+      '/api/phone-validate',
       {
         schema: {
           querystring: {
@@ -132,7 +132,7 @@ const register = fp(
       },
     )
     server.post(
-      '/register',
+      '/api/register',
       {
         schema: {
           body: {

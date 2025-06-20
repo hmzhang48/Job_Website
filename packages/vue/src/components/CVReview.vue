@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, useTemplateRef } from 'vue'
+  import { getFileUrl } from '../lib/help.ts'
   const props = defineProps<{
     cv: string
   }>()
@@ -7,8 +8,7 @@
     finishCv: [action: string, cv: string, datetime?: string, location?: string]
   }>()
   let embed = useTemplateRef('embed')
-  const env = import.meta.env
-  const url = env.PROD ? `https://${env.VITE_AZURE_STORAGE_ACCOUNT}.blob.core.windows.net` : ''
+  const url = getFileUrl()
   let src = computed(() => `${url}/pdf/${props.cv}.pdf`)
   onMounted(
     () => {

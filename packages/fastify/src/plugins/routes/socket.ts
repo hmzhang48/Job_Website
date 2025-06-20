@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 const socket = fp(
   (f, _, done) => {
     f.get(
-      '/ws',
+      '/api/ws',
       { websocket: true },
       (socket) => {
         socket.on(

@@ -1,6 +1,6 @@
 import type { jobInfo, jobItem } from '../interface.ts'
 export const getJobList = async (c: Record<string, string | number>) => {
-  let url = '/jobinfo?'
+  let url = '/api/jobinfo?'
   for (const [key, value] of Object.entries(c))
     url += `${key}=${value}&`
   url = url.slice(0, -1)
@@ -22,7 +22,7 @@ export const getJobList = async (c: Record<string, string | number>) => {
 }
 export const finishJob = async (jobInfo: jobInfo) =>
   fetch(
-    '/jobinfo',
+    '/api/jobinfo',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -34,7 +34,7 @@ export const finishJob = async (jobInfo: jobInfo) =>
     .then((value: { result: boolean } | undefined) => value?.result)
 export const patchJob = async (jobInfo: Partial<jobInfo>, no: number, corpId: string) =>
   fetch(
-    '/jobinfo',
+    '/api/jobinfo',
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
@@ -46,7 +46,7 @@ export const patchJob = async (jobInfo: Partial<jobInfo>, no: number, corpId: st
     .then((value: { result: boolean } | undefined) => value?.result)
 export const deleteJob = async (no: number, corpId: string) =>
   fetch(
-    '/jobinfo',
+    '/api/jobinfo',
     {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },

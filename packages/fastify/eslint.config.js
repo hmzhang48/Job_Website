@@ -1,4 +1,5 @@
 import eslint from '@eslint/js'
+import globals from "globals"
 import tslint from 'typescript-eslint'
 import unicorn from 'eslint-plugin-unicorn'
 export default tslint.config(
@@ -7,9 +8,12 @@ export default tslint.config(
   ...tslint.configs.recommended,
   {
     languageOptions: {
+      globals: {
+        ...globals.node,
+      },
       parserOptions: {
         projectService: true
-      }
+      },
     }
   }
 )

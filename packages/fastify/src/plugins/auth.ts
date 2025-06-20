@@ -12,11 +12,14 @@ declare module '@fastify/jwt' {
   }
 }
 const urlList = new Set([
-  '/email-check', '/email-validate', '/phone-validate',
-  '/register', '/login',
+  '/api/email-check',
+  '/api/email-validate',
+  '/api/phone-validate',
+  '/api/register',
+  '/api/login',
 ])
 const fileList = new Set([
-  '.html', '.css', '.js', '.json', '.png', '.svg', '.ico', '.pdf',
+  '.html', '.css', '.js', '.svg',
 ])
 const urlCheck = (url: string) => {
   if (url === '/') return false
