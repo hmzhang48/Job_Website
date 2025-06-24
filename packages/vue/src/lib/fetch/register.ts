@@ -12,14 +12,22 @@ export const validMail = async (email: string) =>
     { method: 'GET' }
   )
     .then(response => response.json())
-    .then((value: { result: string }) => value.result)
+    .then((value: { result: boolean }) => value.result)
 export const validPhone = async (phone: string) =>
   fetch(
     '/api/phone-validate?phone=' + phone,
     { method: 'GET' }
   )
     .then(response => response.json())
-    .then((value: { result: string }) => value.result)
+    .then((value: { result: boolean }) => value.result)
+
+export const validCode = async (key: string, value: string) =>
+  fetch(
+    '/api/code-validate?key=' + key + '&value=' + value,
+    { method: 'GET' }
+  )
+    .then(response => response.json())
+    .then((value: { result: boolean }) => value.result)
 export const register = async (user: User) =>
   fetch(
     '/api/register',

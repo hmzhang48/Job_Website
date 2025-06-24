@@ -4,10 +4,16 @@ services:
     env_file:
       - ./postgres/.env
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
       - ./postgres/initdb:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+  cache:
+    image: "redis:8.0-alpine"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
   server:
     build: ./node
     env_file:
@@ -22,8 +28,6 @@ services:
   proxy:
     image: "caddy:2.10-alpine"
     volumes:
-      - caddy-config:/config
-      - caddy-data:/data
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./caddy/root:/usr/share/caddy
     ports:
@@ -33,6 +37,4 @@ services:
       - server
 
 volumes:
-  postgres-data:
-  caddy-config:
-  caddy-data:
+  db-data:

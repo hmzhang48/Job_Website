@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref } from 'vue'
   import { useUserStore } from '../stores/userStore.ts'
-  import { validMail, existMail, register } from '../lib/fetch/register.ts'
+  import { validMail, existMail, register, validCode } from '../lib/fetch/register.ts'
   const userStore = useUserStore()
   const { getGuide } = userStore
   let step = ref(1)
@@ -33,12 +33,12 @@
       invalid.value['email'] = true
     }
   }
-  let validCode: string
+  let sent = false
   let disabled = ref(false)
   const sendCode = async () => {
     disabled.value = true
     countDown()
-    validCode = await validMail(email.value)
+    sent = await validMail(email.value)
   }
   let wait = ref(60)
   const countDown = () => {
@@ -55,11 +55,15 @@
     count()
   }
   let code = ref('')
-  const checkCode = () => {
-    invalid.value['code'] = !(validCode !== '' && code.value === validCode)
-    if (!invalid.value['code']) {
-      step.value++
-      disabled.value = false
+  const checkCode = async () => {
+    if (sent) {
+      invalid.value['code'] = !(await validCode(email.value, code.value))
+      if (!invalid.value['code']) {
+        step.value++
+        disabled.value = false
+      }
+    } else {
+      invalid.value['code'] = true
     }
   }
   let password = ref('')

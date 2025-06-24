@@ -15,6 +15,7 @@ const urlList = new Set([
   '/api/email-check',
   '/api/email-validate',
   '/api/phone-validate',
+  '/api/code-validate',
   '/api/register',
   '/api/login',
 ])

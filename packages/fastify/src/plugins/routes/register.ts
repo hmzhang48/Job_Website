@@ -62,7 +62,7 @@ const register = fp(
           response: {
             200: {
               type: 'object',
-              properties: { result: { type: 'string' } },
+              properties: { result: { type: 'boolean' } },
               required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
@@ -72,22 +72,15 @@ const register = fp(
       async (request, reply) => {
         const address = request.query.email
         const code = random({ length: 10 })
+        server.log.info(code)
         const message = {
           from: 'Haomin Zhang <zhanghaomin@ethereal.email>',
           to: address,
           subject: '验证码',
           html: '<p>' + code + '</p>',
         }
-        let result: boolean
-        result = await server.mail.verify()
-          .then(() => true)
-          .catch(
-            error => {
-              server.log.error(error)
-              return false
-            }
-          )
-        if (result && server.mail.isIdle())
+        let result = false
+        if (server.mail.isIdle())
           result = await server.mail.sendMail(message)
             .then(() => true)
             .catch(
@@ -96,7 +89,9 @@ const register = fp(
                 return false
               }
             )
-        reply.send({ result: result ? code : '' })
+        if (result)
+          await server.redis.set(address, code)
+        reply.send({ result: result })
       },
     )
     server.get(
@@ -117,7 +112,7 @@ const register = fp(
           response: {
             200: {
               type: 'object',
-              properties: { result: { type: 'string' } },
+              properties: { result: { type: 'boolean' } },
               required: ['result'],
               additionalProperties: false,
             } as const satisfies JSONSchema,
@@ -126,9 +121,40 @@ const register = fp(
       },
       async (request, reply) => {
         const phone = request.query.phone
-        server.log.info(phone)
         const code = random({ length: 10 })
-        reply.send({ result: code })
+        server.log.info(code)
+        await server.redis.set(phone, code)
+        reply.send({ result: true })
+      },
+    )
+    server.get(
+      '/api/code-validate',
+      {
+        schema: {
+          querystring: {
+            type: 'object',
+            properties: {
+              key: { type: 'string' },
+              value: { type: 'string' }
+            },
+            required: ['key', 'value'],
+            additionalProperties: false,
+          } as const satisfies JSONSchema,
+          response: {
+            200: {
+              type: 'object',
+              properties: { result: { type: 'boolean' } },
+              required: ['result'],
+              additionalProperties: false,
+            } as const satisfies JSONSchema,
+          },
+        },
+      },
+      async (request, reply) => {
+        const key = request.query.key
+        const value = request.query.value
+        const code = await server.redis.get(key)
+        reply.send({ result: code === value })
       },
     )
     server.post(

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, watch, onMounted, useTemplateRef } from 'vue'
   import { useUserStore } from '../stores/userStore.ts'
-  import { validPhone } from '../lib/fetch/register.ts'
+  import { validPhone, validCode } from '../lib/fetch/register.ts'
   import { uploadImage } from '../lib/fetch/image.ts'
   import { postUserInfo } from '../lib/fetch/userinfo.ts'
   import { initProvince, initCity, initArea, loadImage } from '../lib/help.ts'
@@ -66,13 +66,13 @@
     resetCode()
     invalid.value['phone'] = !phoneRegex.test(phone.value)
   }
-  let validCode = ''
+  let sent = false
   let disabled = ref(false)
   const sendCode = async () => {
     if (invalid.value['phone'] === false) {
       disabled.value = true
       countDown()
-      validCode = await validPhone(phone.value)
+      sent = await validPhone(phone.value)
     }
   }
   let wait = ref(60)
@@ -90,9 +90,10 @@
     count()
   }
   let code = ref('')
-  const checkCode = () => invalid.value['code'] = !(validCode !== '' && code.value === validCode)
+  const checkCode = async () =>
+    invalid.value['code'] = sent ? !(await validCode(phone.value, code.value)) : true
   const resetCode = () => {
-    validCode = ''
+    sent = false
     if (code.value !== '') {
       code.value = ''
       invalid.value['code'] = true
